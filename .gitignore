@@ -3,3 +3,13 @@
 ################################################################################
 
 *.exe
+/.vs
+*.exp
+*.ilk
+/bin/win64/Debug/default.lib
+*.pdb
+/bin/win64/Debug/fluidsGL.lib
+/bin/win64/Debug/lbm.lib
+/default/x64/Debug
+/fluidsGL/x64/Debug
+/lbm/x64/Debug
