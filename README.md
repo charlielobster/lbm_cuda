@@ -8,10 +8,10 @@ Most of the conventions used by Nvidia Corporation's Cuda Samples for v10.2 were
 These include:
 *	additional include directories ./common/inc
 *	lib files location ./common/lib 
-	* output directories for executables ./bin/win64/Debug, 
-	* three dlls are required in ./bin/win64/Debug to avoid run-time errors:
-		1. glew64.dll
-		1. freeglut.dll
+*	output directories for executables ./bin/win64/Debug, 
+*	three dlls are required in ./bin/win64/Debug to avoid run-time errors:
+	1. glew64.dll
+	1. freeglut.dll
 
 The fluidsGL sample project from Nvidia's Cuda Samples was added to the project space.
 Then the lbm project was created from a another default Cuda 10.2 project.
