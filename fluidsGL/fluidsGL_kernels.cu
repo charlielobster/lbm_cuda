@@ -12,14 +12,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <cuda.h>
 #include <cuda_runtime.h>
+#include <device_launch_parameters.h>
 #include <cufft.h>          // CUDA FFT Libraries
 #include <helper_cuda.h>    // Helper functions for CUDA Error handling
 
 // OpenGL Graphics includes
 #define HELPERGL_EXTERN_GL_FUNC_IMPLEMENTATION
 #include <helper_gl.h>
-
 
 // FluidsGL CUDA kernel definitions
 #include "fluidsGL_kernels.cuh"
@@ -295,7 +296,6 @@ advectParticles_k(cData *part, cData *v, int dx, int dy,
         } // If this thread is inside the domain in Y
     } // If this thread is inside the domain in X
 }
-
 
 // These are the external function calls necessary for launching fluid simulation
 extern "C"

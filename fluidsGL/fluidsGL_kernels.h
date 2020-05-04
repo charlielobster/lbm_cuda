@@ -11,6 +11,11 @@
 #ifndef __STABLEFLUIDS_KERNELS_CUH_
 #define __STABLEFLUIDS_KERNELS_CUH_
 
+
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
+
 // Vector data type used to velocity and force fields
 typedef float2 cData;
 

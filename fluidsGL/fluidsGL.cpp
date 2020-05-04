@@ -28,8 +28,10 @@
 #include <string.h>
 
 // CUDA standard includes
+#include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
+#include <device_launch_parameters.h>
 
 // CUDA FFT Libraries
 #include <cufft.h>
@@ -98,7 +100,6 @@ extern "C" void advectVelocity(cData *v, float *vx, float *vy, int dx, int pdx, 
 extern "C" void diffuseProject(cData *vx, cData *vy, int dx, int dy, float dt, float visc);
 extern "C" void updateVelocity(cData *v, float *vx, float *vy, int dx, int pdx, int dy);
 extern "C" void advectParticles(GLuint vbo, cData *v, int dx, int dy, float dt);
-
 
 void simulateFluids(void)
 {
@@ -389,7 +390,6 @@ int initGL(int *argc, char **argv)
 
     return true;
 }
-
 
 int main(int argc, char **argv)
 {
