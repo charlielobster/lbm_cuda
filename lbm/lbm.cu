@@ -58,28 +58,6 @@ int getIndex(int x, int y, parameter_set* params)
 }
 
 __device__
-void printNode(lbm_node* node, lbm_node* before, lbm_node* after)
-{
-	DEBUG_PRINT(("\t\t\ttest: %x\n", after));
-	DEBUG_PRINT(("\trho: %.6f\n\tux: %.6f\n\tuy: %.6f\n\tvN: %.6f\n\tvE: %.6f\n\tvW: %.6f\n\tvS: %.6f\n\tv0: %.6f\n\tvNW: %.6f\n\tvNE: %.6f\n\tvSW: %.6f\n\tvSE: %.6f\n",
-		node->rho,
-		node->ux,
-		node->uy,
-		(node->f)[dN],
-		(node->f)[dE],
-		(node->f)[dW],
-		(node->f)[dS],
-		(node->f)[d0],
-		(node->f)[dNW],
-		(node->f)[dNE],
-		(node->f)[dSW],
-		(node->f)[dSW]
-		));
-
-	DEBUG_PRINT(("\n\tbefore: %p \n\tafter: %p \n\t node : %p \n", before, after, node));
-}
-
-__device__
 uchar4 getRGB_roh(float i, parameter_set* params)
 {
 
@@ -226,12 +204,6 @@ void macro_gen(float* f, float* ux, float* uy, float* rho, int i, parameter_set*
 	const float mid_row = f[3] + f[0] + f[1];
 	const float bot_row = f[7] + f[4] + f[8];
 
-	if (i == getIndex(trace_x, trace_y, params))
-		for (int i = 0; i < 9;i++)
-		{
-			DEBUG_PRINT(("\t\tmacro_gen: f[%d]=%.6f\n", i, f[i]));
-		}
-
 	*rho = top_row + mid_row + bot_row;
 	if (*rho > 0)
 	{
@@ -269,14 +241,6 @@ void collide(d2q9_node* d2q9, lbm_node* before, lbm_node* after, parameter_set* 
 	//toss out out of bounds
 	if (x<0 || x >= params->width || y<0 || y >= params->height)
 		return;
-
-	if (x == trace_x && y == trace_y)
-	{
-		DEBUG_PRINT(("\n\nPre-Collision (before):\n"));
-		printNode(&(before[i]), before, after);
-		DEBUG_PRINT(("\n\nPre-Collision (after) (not used):\n"));
-		printNode(&(after[i]), before, after);
-	}
 
 	macro_gen(before[i].f, &(after[i].ux), &(after[i].uy), &(after[i].rho), i, params);
 
@@ -360,12 +324,6 @@ void stream(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
 	int i = getIndex(x, y, params);
 
 
-	if (x == trace_x && y == trace_y)
-	{
-		DEBUG_PRINT(("\n\nPre-stream: (before)\n"));
-		printNode(&(before[i]), before, after);
-	}
-
 	//toss out out of bounds and edge cases
 	if (x < 0 || x >= params->width || y < 0 || y >= params->height)
 		return;
@@ -399,12 +357,6 @@ void bounceAndRender(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int i = getIndex(x, y, params);
 
-	if (x == trace_x && y == trace_y)
-	{
-		DEBUG_PRINT(("\n\npre-barriers:\n"));
-		printNode(&(after[i]), before, after);
-	}
-
 	//toss out out of bounds and edge cases
 	if (x < 0 || x >= params->width || y < 0 || y >= params->height)
 		return;
@@ -425,12 +377,6 @@ void bounceAndRender(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
 		}
 	}
 
-	if (x == trace_x && y == trace_y)
-	{
-		DEBUG_PRINT(("\n\nFinal rendered:\n"));
-		printNode(&(after[i]), before, after);
-	}
-
 	computeColor(after, x, y, params, image, barrier, prex, prey);
 }
 
@@ -449,8 +395,6 @@ extern "C" void kernelLauncher(uchar4* image)
 	lbm_node* before = array1_gpu;
 	lbm_node* after = array2_gpu;
 
-	DEBUG_PRINT(("these are the addresses: \n\t\tb4=%p\taft=%p\n\t\tar1=%p\tar2=%p", before, after, array1_gpu, array2_gpu));
-
 	//determine number of threads and blocks required
 	dim3 threads_per_block = dim3(32, 32, 1);
 	dim3 number_of_blocks = dim3(params.width / 32 + 1, params.height / 32 + 1, 1);
@@ -459,8 +403,6 @@ extern "C" void kernelLauncher(uchar4* image)
 
 	ierrSync = cudaGetLastError();
 	ierrAsync = cudaDeviceSynchronize(); // Wait for the GPU to finish
-	if (ierrSync != cudaSuccess) { DEBUG_PRINT(("Sync error: %s\n", cudaGetErrorString(ierrSync))); }
-	if (ierrAsync != cudaSuccess) { DEBUG_PRINT(("Async error: %s\n", cudaGetErrorString(ierrAsync))); }
 
 	before = array2_gpu;
 	after = array1_gpu;
@@ -469,13 +411,9 @@ extern "C" void kernelLauncher(uchar4* image)
 
 	ierrSync = cudaGetLastError();
 	ierrAsync = cudaDeviceSynchronize(); // Wait for the GPU to finish
-	if (ierrSync != cudaSuccess) { DEBUG_PRINT(("Sync error: %s\n", cudaGetErrorString(ierrSync))); }
-	if (ierrAsync != cudaSuccess) { DEBUG_PRINT(("Async error: %s\n", cudaGetErrorString(ierrAsync))); }
 
 	bounceAndRender<<<number_of_blocks, threads_per_block >>>(d2q9_gpu, before, after, barrier_gpu, params_gpu, image, prex, prey);
 
 	ierrSync = cudaGetLastError();
 	ierrAsync = cudaDeviceSynchronize(); // Wait for the GPU to finish
-	if (ierrSync != cudaSuccess) { DEBUG_PRINT(("Sync error: %s\n", cudaGetErrorString(ierrSync))); }
-	if (ierrAsync != cudaSuccess) { DEBUG_PRINT(("Async error: %s\n", cudaGetErrorString(ierrAsync))); }
 }

@@ -3,13 +3,6 @@
 
 #define trace_x 50
 #define trace_y 57
-#define DEBUG_DELAY 0
-
-#ifdef DEBUG
-# define DEBUG_PRINT(x) printf x
-#else
-# define DEBUG_PRINT(x) do {} while (0)
-#endif
 
 enum directions {
 	d0 = 0,

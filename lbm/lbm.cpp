@@ -153,8 +153,6 @@ void initFluid()
 	d2q9_node* d2q9 = (d2q9_node*)calloc(9, sizeof(d2q9_node));
 	init_d2q9(d2q9);
 
-	DEBUG_PRINT(("\tTESTWEIGHT = %.6f", d2q9[dE].wt));
-
 	int i;
 	for (int x = 0; x < params.width; x++)
 	{
@@ -177,27 +175,17 @@ void initFluid()
 	}
 
 	ierrSync = cudaMalloc(&d2q9_gpu, 9 * sizeof(d2q9_node));
-	if (ierrSync != cudaSuccess) { DEBUG_PRINT(("Sync error: %s\n", cudaGetErrorString(ierrSync))); }
 	ierrSync = cudaMalloc(&params_gpu, sizeof(parameter_set));
-	if (ierrSync != cudaSuccess) { DEBUG_PRINT(("Sync error: %s\n", cudaGetErrorString(ierrSync))); }
 	ierrSync = cudaMalloc(&barrier_gpu, sizeof(unsigned char) * W * H);
-	if (ierrSync != cudaSuccess) { DEBUG_PRINT(("Sync error: %s\n", cudaGetErrorString(ierrSync))); }
 	ierrSync = cudaMalloc(&array1_gpu, sizeof(lbm_node) * W * H);
-	if (ierrSync != cudaSuccess) { DEBUG_PRINT(("Sync error: %s\n", cudaGetErrorString(ierrSync))); }
 	ierrSync = cudaMalloc(&array2_gpu, sizeof(lbm_node) * W * H);
-	if (ierrSync != cudaSuccess) { DEBUG_PRINT(("Sync error: %s\n", cudaGetErrorString(ierrSync))); }
 
 
 	ierrSync = cudaMemcpy(d2q9_gpu, d2q9, sizeof(d2q9_node) * 9, cudaMemcpyHostToDevice);
-	if (ierrSync != cudaSuccess) { DEBUG_PRINT(("Sync error: %s\n", cudaGetErrorString(ierrSync))); }
 	ierrSync = cudaMemcpy(params_gpu, &params, sizeof(params), cudaMemcpyHostToDevice);
-	if (ierrSync != cudaSuccess) { DEBUG_PRINT(("Sync error: %s\n", cudaGetErrorString(ierrSync))); }
 	ierrSync = cudaMemcpy(barrier_gpu, barrier, sizeof(unsigned char) * W * H, cudaMemcpyHostToDevice);
-	if (ierrSync != cudaSuccess) { DEBUG_PRINT(("Sync error: %s\n", cudaGetErrorString(ierrSync))); }
 	ierrSync = cudaMemcpy(array1_gpu, array1, sizeof(lbm_node) * W * H, cudaMemcpyHostToDevice);
-	if (ierrSync != cudaSuccess) { DEBUG_PRINT(("Sync error: %s\n", cudaGetErrorString(ierrSync))); }
 	ierrSync = cudaMemcpy(array2_gpu, array2, sizeof(lbm_node) * W * H, cudaMemcpyHostToDevice);
-	if (ierrSync != cudaSuccess) { DEBUG_PRINT(("Sync error: %s\n", cudaGetErrorString(ierrSync))); }
 
 	cudaDeviceSynchronize();
 
@@ -207,8 +195,6 @@ void initFluid()
 //keyboard callback
 void keyboard(unsigned char a, int b, int c)
 {
-	DEBUG_PRINT(("%x pressed\n", a));
-
 	if (!(waitingForSpeed || waitingForViscosity || waitingForRate))
 	{
 		switch (a)
@@ -514,7 +500,7 @@ void update()
 	delta_t = current_draw_time - last_draw_time;
 
 	//limit framerate to 5Hz
-	if (delta_t < DEBUG_DELAY)
+	if (delta_t < 0)
 	{
 		return;
 	}
@@ -523,7 +509,6 @@ void update()
 
 	//calculate fps
 	fps = delta_t != 0 ? 1000.0 / delta_t : 0;
-	//DEBUG_PRINT("in render: delta t = %.6f\n", delta_t);
 	display(delta_t);
 }
 
@@ -561,11 +546,9 @@ int main(int argc, char** argv)
 {
 	//discover all Cuda-capable hardware
 	int i = deviceQuery();
-	//DEBUG_PRINT(("num devices is %d\n", i));
 
 	if (i < 1)
 	{
-		//DEBUG_PRINT(("ERROR: no cuda capable hardware detected!\n"));
 		getchar();
 		return 0; //return if no cuda-capable hardware is present
 	}
