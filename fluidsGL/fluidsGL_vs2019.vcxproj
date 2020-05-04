@@ -111,7 +111,6 @@
     <ClCompile Include="fluidsGL.cpp" />
     <CudaCompile Include="fluidsGL_kernels.cu" />
     <ClInclude Include="defines.h" />
-    <ClInclude Include="fluidsGL_kernels.cuh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

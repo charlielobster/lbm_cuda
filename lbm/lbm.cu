@@ -15,7 +15,7 @@ extern lbm_node* array1_gpu;
 extern lbm_node* array2_gpu;
 extern unsigned char* barrier;
 extern unsigned char* barrier_gpu;
-extern d2q9_node* d2q9_gpu;
+d2q9_node* d2q9_gpu;
 extern parameter_set* params_gpu;
 extern char needsUpdate;
 extern int prex;
@@ -357,9 +357,20 @@ void bounceAndRender(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
 	computeColor(after, x, y, params, image, barrier, prex, prey);
 }
 
+extern "C" void init_gpu(d2q9_node * d2q9)
+{
+	ierrSync = cudaMalloc(&d2q9_gpu, 9 * sizeof(d2q9_node));
+	ierrSync = cudaMemcpy(d2q9_gpu, d2q9, sizeof(d2q9_node) * 9, cudaMemcpyHostToDevice);
+}
+
+extern "C" void free_gpu()
+{
+	cudaFree(d2q9_gpu);
+}
+
 //determine front and back lattice buffer orientation
 //and launch all 3 LBM kernels
-extern "C" void kernelLauncher(uchar4* image)
+extern "C" void launch_kernels(uchar4* image)
 {
 	if (needsUpdate)
 	{

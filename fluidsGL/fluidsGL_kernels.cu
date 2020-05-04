@@ -12,7 +12,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <cuda.h>
 #include <cuda_runtime.h>
+#include <device_launch_parameters.h>
 #include <cufft.h>          // CUDA FFT Libraries
 #include <helper_cuda.h>    // Helper functions for CUDA Error handling
 
@@ -20,9 +22,11 @@
 #define HELPERGL_EXTERN_GL_FUNC_IMPLEMENTATION
 #include <helper_gl.h>
 
+#include "defines.h"
+
 
 // FluidsGL CUDA kernel definitions
-#include "fluidsGL_kernels.cuh"
+//#include "fluidsGL_kernels.cuh"
 
 // Texture object for reading velocity field
 cudaTextureObject_t     texObj;
@@ -36,43 +40,8 @@ extern struct cudaGraphicsResource *cuda_vbo_resource; // handles OpenGL-CUDA ex
 extern size_t tPitch;
 extern cufftHandle planr2c;
 extern cufftHandle planc2r;
-cData *vxfield = NULL;
-cData *vyfield = NULL;
-
-void setupTexture(int x, int y)
-{
-    cudaChannelFormatDesc desc = cudaCreateChannelDesc<float2>();
-
-    cudaMallocArray(&array, &desc, y, x);
-    getLastCudaError("cudaMalloc failed");
-
-    cudaResourceDesc            texRes;
-    memset(&texRes,0,sizeof(cudaResourceDesc));
-
-    texRes.resType            = cudaResourceTypeArray;
-    texRes.res.array.array    = array;
-
-    cudaTextureDesc             texDescr;
-    memset(&texDescr,0,sizeof(cudaTextureDesc));
-
-    texDescr.normalizedCoords = false;
-    texDescr.filterMode       = cudaFilterModeLinear;
-    texDescr.addressMode[0] = cudaAddressModeWrap;
-    texDescr.readMode = cudaReadModeElementType;
-
-    checkCudaErrors(cudaCreateTextureObject(&texObj, &texRes, &texDescr, NULL));
-}
-
-void updateTexture(cData *data, size_t wib, size_t h, size_t pitch)
-{
-    checkCudaErrors(cudaMemcpy2DToArray(array, 0, 0, data, pitch, wib, h, cudaMemcpyDeviceToDevice));
-}
-
-void deleteTexture(void)
-{
-    checkCudaErrors(cudaDestroyTextureObject(texObj));
-    checkCudaErrors(cudaFreeArray(array));
-}
+float2 *vxfield = NULL;
+float2 *vyfield = NULL;
 
 // Note that these kernels are designed to work with arbitrary
 // domain sizes, not just domains that are multiples of the tile
@@ -86,14 +55,14 @@ void deleteTexture(void)
 // This method adds constant force vectors to the velocity field
 // stored in 'v' according to v(x,t+1) = v(x,t) + dt * f.
 __global__ void
-addForces_k(cData *v, int dx, int dy, int spx, int spy, float fx, float fy, int r, size_t pitch)
+addForces_k(float2 *v, int dx, int dy, int spx, int spy, float fx, float fy, int r, size_t pitch)
 {
 
     int tx = threadIdx.x;
     int ty = threadIdx.y;
-    cData *fj = (cData *)((char *)v + (ty + spy) * pitch) + tx + spx;
+    float2 *fj = (float2 *)((char *)v + (ty + spy) * pitch) + tx + spx;
 
-    cData vterm = *fj;
+    float2 vterm = *fj;
     tx -= r;
     ty -= r;
     float s = 1.f / (1.f + tx*tx*tx*tx + ty*ty*ty*ty);
@@ -107,7 +76,7 @@ addForces_k(cData *v, int dx, int dy, int spx, int spy, float fx, float fy, int 
 // That is, v(x,t+1) = v(p(x,-dt),t). Here we perform bilinear
 // interpolation in the velocity space.
 __global__ void
-advectVelocity_k(cData *v, float *vx, float *vy,
+advectVelocity_k(float2 *v, float *vx, float *vy,
                  int dx, int pdx, int dy, float dt, int lb, cudaTextureObject_t texObject)
 {
 
@@ -115,7 +84,7 @@ advectVelocity_k(cData *v, float *vx, float *vy,
     int gtidy = blockIdx.y * (lb * blockDim.y) + threadIdx.y * lb;
     int p;
 
-    cData vterm, ploc;
+    float2 vterm, ploc;
     float vxterm, vyterm;
 
     // gtidx is the domain location in x for this thread
@@ -129,10 +98,10 @@ advectVelocity_k(cData *v, float *vx, float *vy,
             if (fi < dy)
             {
                 int fj = fi * pdx + gtidx;
-                vterm = tex2D<cData>(texObject, (float)gtidx, (float)fi);
+                vterm = tex2D<float2>(texObject, (float)gtidx, (float)fi);
                 ploc.x = (gtidx + 0.5f) - (dt * vterm.x * dx);
                 ploc.y = (fi + 0.5f) - (dt * vterm.y * dy);
-                vterm = tex2D<cData>(texObject, ploc.x, ploc.y);
+                vterm = tex2D<float2>(texObject, ploc.x, ploc.y);
                 vxterm = vterm.x;
                 vyterm = vterm.y;
                 vx[fj] = vxterm;
@@ -151,7 +120,7 @@ advectVelocity_k(cData *v, float *vx, float *vy,
 // velocity vectors to be orthogonal to the vectors for each
 // wavenumber: v(k,t) = v(k,t) - ((k dot v(k,t) * k) / k^2.
 __global__ void
-diffuseProject_k(cData *vx, cData *vy, int dx, int dy, float dt,
+diffuseProject_k(float2 *vx, float2 *vy, int dx, int dy, float dt,
                  float visc, int lb)
 {
 
@@ -159,7 +128,7 @@ diffuseProject_k(cData *vx, cData *vy, int dx, int dy, float dt,
     int gtidy = blockIdx.y * (lb * blockDim.y) + threadIdx.y * lb;
     int p;
 
-    cData xterm, yterm;
+    float2 xterm, yterm;
 
     // gtidx is the domain location in x for this thread
     if (gtidx < dx)
@@ -213,7 +182,7 @@ diffuseProject_k(cData *vx, cData *vy, int dx, int dy, float dt,
 // arrays from the previous step: 'vx' and 'vy'. Here we scale the
 // real components by 1/(dx*dy) to account for an unnormalized FFT.
 __global__ void
-updateVelocity_k(cData *v, float *vx, float *vy,
+updateVelocity_k(float2 *v, float *vx, float *vy,
                  int dx, int pdx, int dy, int lb, size_t pitch)
 {
 
@@ -222,7 +191,7 @@ updateVelocity_k(cData *v, float *vx, float *vy,
     int p;
 
     float vxterm, vyterm;
-    cData nvterm;
+    float2 nvterm;
 
     // gtidx is the domain location in x for this thread
     if (gtidx < dx)
@@ -243,7 +212,7 @@ updateVelocity_k(cData *v, float *vx, float *vy,
                 nvterm.x = vxterm * scale;
                 nvterm.y = vyterm * scale;
 
-                cData *fj = (cData *)((char *)v + fi * pitch) + gtidx;
+                float2 *fj = (float2 *)((char *)v + fi * pitch) + gtidx;
                 *fj = nvterm;
             }
         } // If this thread is inside the domain in Y
@@ -254,7 +223,7 @@ updateVelocity_k(cData *v, float *vx, float *vy,
 // according to the velocity field and time step. That is, for each
 // particle: p(t+1) = p(t) + dt * v(p(t)).
 __global__ void
-advectParticles_k(cData *part, cData *v, int dx, int dy,
+advectParticles_k(float2 *part, float2 *v, int dx, int dy,
                   float dt, int lb, size_t pitch)
 {
 
@@ -263,7 +232,7 @@ advectParticles_k(cData *part, cData *v, int dx, int dy,
     int p;
 
     // gtidx is the domain location in x for this thread
-    cData pterm, vterm;
+    float2 pterm, vterm;
 
     if (gtidx < dx)
     {
@@ -279,7 +248,7 @@ advectParticles_k(cData *part, cData *v, int dx, int dy,
 
                 int xvi = ((int)(pterm.x * dx));
                 int yvi = ((int)(pterm.y * dy));
-                vterm = *((cData *)((char *)v + yvi * pitch) + xvi);
+                vterm = *((float2 *)((char *)v + yvi * pitch) + xvi);
 
                 pterm.x += dt * vterm.x;
                 pterm.x = pterm.x - (int)pterm.x;
@@ -296,12 +265,45 @@ advectParticles_k(cData *part, cData *v, int dx, int dy,
     } // If this thread is inside the domain in X
 }
 
-
 // These are the external function calls necessary for launching fluid simulation
-extern "C"
-void addForces(cData *v, int dx, int dy, int spx, int spy, float fx, float fy, int r)
+extern "C" void setupTexture(int x, int y)
 {
+    cudaChannelFormatDesc desc = cudaCreateChannelDesc<float2>();
 
+    cudaMallocArray(&array, &desc, y, x);
+    getLastCudaError("cudaMalloc failed");
+
+    cudaResourceDesc            texRes;
+    memset(&texRes, 0, sizeof(cudaResourceDesc));
+
+    texRes.resType = cudaResourceTypeArray;
+    texRes.res.array.array = array;
+
+    cudaTextureDesc             texDescr;
+    memset(&texDescr, 0, sizeof(cudaTextureDesc));
+
+    texDescr.normalizedCoords = false;
+    texDescr.filterMode = cudaFilterModeLinear;
+    texDescr.addressMode[0] = cudaAddressModeWrap;
+    texDescr.readMode = cudaReadModeElementType;
+
+    checkCudaErrors(cudaCreateTextureObject(&texObj, &texRes, &texDescr, NULL));
+}
+
+extern "C" void updateTexture(float2 * data, size_t wib, size_t h, size_t pitch)
+{
+    checkCudaErrors(cudaMemcpy2DToArray(array, 0, 0, data, pitch, wib, h, cudaMemcpyDeviceToDevice));
+}
+
+extern "C" void deleteTexture(void)
+{
+    checkCudaErrors(cudaDestroyTextureObject(texObj));
+    checkCudaErrors(cudaFreeArray(array));
+}
+
+extern "C"
+void addForces(float2 *v, int dx, int dy, int spx, int spy, float fx, float fy, int r)
+{
     dim3 tids(2*r+1, 2*r+1);
 
     addForces_k<<<1, tids>>>(v, dx, dy, spx, spy, fx, fy, r, tPitch);
@@ -309,20 +311,18 @@ void addForces(cData *v, int dx, int dy, int spx, int spy, float fx, float fy, i
 }
 
 extern "C"
-void advectVelocity(cData *v, float *vx, float *vy, int dx, int pdx, int dy, float dt)
+void advectVelocity(float2 *v, float *vx, float *vy, int dx, int pdx, int dy, float dt)
 {
     dim3 grid((dx/TILEX)+(!(dx%TILEX)?0:1), (dy/TILEY)+(!(dy%TILEY)?0:1));
-
     dim3 tids(TIDSX, TIDSY);
 
-    updateTexture(v, DIM*sizeof(cData), DIM, tPitch);
+    updateTexture(v, DIM*sizeof(float2), DIM, tPitch);
     advectVelocity_k<<<grid, tids>>>(v, vx, vy, dx, pdx, dy, dt, TILEY/TIDSY, texObj);
-
     getLastCudaError("advectVelocity_k failed.");
 }
 
 extern "C"
-void diffuseProject(cData *vx, cData *vy, int dx, int dy, float dt, float visc)
+void diffuseProject(float2 *vx, float2 *vy, int dx, int dy, float dt, float visc)
 {
     // Forward FFT
     checkCudaErrors(cufftExecR2C(planr2c, (cufftReal *)vx, (cufftComplex *)vx));
@@ -341,7 +341,7 @@ void diffuseProject(cData *vx, cData *vy, int dx, int dy, float dt, float visc)
 }
 
 extern "C"
-void updateVelocity(cData *v, float *vx, float *vy, int dx, int pdx, int dy)
+void updateVelocity(float2 *v, float *vx, float *vy, int dx, int pdx, int dy)
 {
     dim3 grid((dx/TILEX)+(!(dx%TILEX)?0:1), (dy/TILEY)+(!(dy%TILEY)?0:1));
     dim3 tids(TIDSX, TIDSY);
@@ -351,12 +351,12 @@ void updateVelocity(cData *v, float *vx, float *vy, int dx, int pdx, int dy)
 }
 
 extern "C"
-void advectParticles(GLuint vbo, cData *v, int dx, int dy, float dt)
+void advectParticles(GLuint vbo, float2 *v, int dx, int dy, float dt)
 {
     dim3 grid((dx/TILEX)+(!(dx%TILEX)?0:1), (dy/TILEY)+(!(dy%TILEY)?0:1));
     dim3 tids(TIDSX, TIDSY);
 
-    cData *p;
+    float2 *p;
     cudaGraphicsMapResources(1, &cuda_vbo_resource, 0);
     getLastCudaError("cudaGraphicsMapResources failed");
 

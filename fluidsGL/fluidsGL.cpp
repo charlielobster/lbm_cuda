@@ -40,7 +40,6 @@
 #include <helper_cuda.h>
 
 #include "defines.h"
-#include "fluidsGL_kernels.cuh"
 
 #define MAX_EPSILON_ERROR 1.0f
 
@@ -59,11 +58,11 @@ void reshape(int x, int y);
 // CUFFT plan handle
 cufftHandle planr2c;
 cufftHandle planc2r;
-static cData *vxfield = NULL;
-static cData *vyfield = NULL;
+static float2 *vxfield = NULL;
+static float2 *vyfield = NULL;
 
-cData *hvfield = NULL;
-cData *dvfield = NULL;
+float2 *hvfield = NULL;
+float2 *dvfield = NULL;
 static int wWidth  = MAX(512, DIM);
 static int wHeight = MAX(512, DIM);
 
@@ -75,7 +74,7 @@ StopWatchInterface *timer = NULL;
 // Particle data
 GLuint vbo = 0;                 // OpenGL vertex buffer object
 struct cudaGraphicsResource *cuda_vbo_resource; // handles OpenGL-CUDA exchange
-static cData *particles = NULL; // particle positions in host memory
+static float2 *particles = NULL; // particle positions in host memory
 static int lastx = 0, lasty = 0;
 
 // Texture pitch
@@ -93,11 +92,14 @@ CheckRender       *g_CheckRender = NULL;
 
 void autoTest(char **);
 
-extern "C" void addForces(cData *v, int dx, int dy, int spx, int spy, float fx, float fy, int r);
-extern "C" void advectVelocity(cData *v, float *vx, float *vy, int dx, int pdx, int dy, float dt);
-extern "C" void diffuseProject(cData *vx, cData *vy, int dx, int dy, float dt, float visc);
-extern "C" void updateVelocity(cData *v, float *vx, float *vy, int dx, int pdx, int dy);
-extern "C" void advectParticles(GLuint vbo, cData *v, int dx, int dy, float dt);
+extern "C" void addForces(float2 *v, int dx, int dy, int spx, int spy, float fx, float fy, int r);
+extern "C" void advectVelocity(float2 *v, float *vx, float *vy, int dx, int pdx, int dy, float dt);
+extern "C" void diffuseProject(float2 *vx, float2 *vy, int dx, int dy, float dt, float visc);
+extern "C" void updateVelocity(float2 *v, float *vx, float *vy, int dx, int pdx, int dy);
+extern "C" void advectParticles(GLuint vbo, float2 *v, int dx, int dy, float dt);
+extern "C" void setupTexture(int x, int y);
+extern "C" void updateTexture(float2* data, size_t w, size_t h, size_t pitch);
+extern "C" void deleteTexture(void);
 
 
 void simulateFluids(void)
@@ -239,7 +241,7 @@ float myrand(void)
     }
 }
 
-void initParticles(cData *p, int dx, int dy)
+void initParticles(float2 *p, int dx, int dy)
 {
     int i, j;
 
@@ -268,8 +270,8 @@ void keyboard(unsigned char key, int x, int y)
             break;
 
         case 'r':
-            memset(hvfield, 0, sizeof(cData) * DS);
-            cudaMemcpy(dvfield, hvfield, sizeof(cData) * DS,
+            memset(hvfield, 0, sizeof(float2) * DS);
+            cudaMemcpy(dvfield, hvfield, sizeof(float2) * DS,
                        cudaMemcpyHostToDevice);
 
             initParticles(particles, DIM, DIM);
@@ -279,7 +281,7 @@ void keyboard(unsigned char key, int x, int y)
             getLastCudaError("cudaGraphicsUnregisterBuffer failed");
 
             glBindBuffer(GL_ARRAY_BUFFER, vbo);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(cData) * DS,
+            glBufferData(GL_ARRAY_BUFFER, sizeof(float2) * DS,
                             particles, GL_DYNAMIC_DRAW_ARB);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -437,23 +439,23 @@ int main(int argc, char **argv)
     sdkCreateTimer(&timer);
     sdkResetTimer(&timer);
 
-    hvfield = (cData *)malloc(sizeof(cData) * DS);
-    memset(hvfield, 0, sizeof(cData) * DS);
+    hvfield = (float2 *)malloc(sizeof(float2) * DS);
+    memset(hvfield, 0, sizeof(float2) * DS);
 
     // Allocate and initialize device data
-    cudaMallocPitch((void **)&dvfield, &tPitch, sizeof(cData)*DIM, DIM);
+    cudaMallocPitch((void **)&dvfield, &tPitch, sizeof(float2)*DIM, DIM);
 
-    cudaMemcpy(dvfield, hvfield, sizeof(cData) * DS,
+    cudaMemcpy(dvfield, hvfield, sizeof(float2) * DS,
                cudaMemcpyHostToDevice);
     // Temporary complex velocity field data
-    cudaMalloc((void **)&vxfield, sizeof(cData) * PDS);
-    cudaMalloc((void **)&vyfield, sizeof(cData) * PDS);
+    cudaMalloc((void **)&vxfield, sizeof(float2) * PDS);
+    cudaMalloc((void **)&vyfield, sizeof(float2) * PDS);
 
     setupTexture(DIM, DIM);
 
     // Create particle array
-    particles = (cData *)malloc(sizeof(cData) * DS);
-    memset(particles, 0, sizeof(cData) * DS);
+    particles = (float2 *)malloc(sizeof(float2) * DS);
+    memset(particles, 0, sizeof(float2) * DS);
 
     initParticles(particles, DIM, DIM);
 
@@ -463,12 +465,12 @@ int main(int argc, char **argv)
 
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cData) * DS,
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float2) * DS,
                     particles, GL_DYNAMIC_DRAW_ARB);
 
     glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &bsize);
 
-    if (bsize != (sizeof(cData) * DS))
+    if (bsize != (sizeof(float2) * DS))
         goto EXTERR;
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);

@@ -26,11 +26,11 @@ parameter_set params;
 unsigned char state = 0;
 lbm_node* array1;
 lbm_node* array2;
+unsigned char* barrier;
+
 lbm_node* array1_gpu;
 lbm_node* array2_gpu;
-unsigned char* barrier;
 unsigned char* barrier_gpu;
-d2q9_node* d2q9_gpu;
 parameter_set* params_gpu;
 
 char needsUpdate = 1;
@@ -47,7 +47,9 @@ char waitingForRate = 0;
 int current_button = GLUT_LEFT_BUTTON; 
 float fps;
 
-extern "C" void kernelLauncher(uchar4 * image);
+extern "C" void init_gpu(d2q9_node * d2q9);
+extern "C" void free_gpu();
+extern "C" void launch_kernels(uchar4 * image);
 
 void getParams(parameter_set* params)
 {
@@ -162,14 +164,13 @@ void initFluid()
 		}
 	}
 
-	ierrSync = cudaMalloc(&d2q9_gpu, 9 * sizeof(d2q9_node));
+	init_gpu(d2q9);
 	ierrSync = cudaMalloc(&params_gpu, sizeof(parameter_set));
 	ierrSync = cudaMalloc(&barrier_gpu, sizeof(unsigned char) * W * H);
 	ierrSync = cudaMalloc(&array1_gpu, sizeof(lbm_node) * W * H);
 	ierrSync = cudaMalloc(&array2_gpu, sizeof(lbm_node) * W * H);
 
 
-	ierrSync = cudaMemcpy(d2q9_gpu, d2q9, sizeof(d2q9_node) * 9, cudaMemcpyHostToDevice);
 	ierrSync = cudaMemcpy(params_gpu, &params, sizeof(params), cudaMemcpyHostToDevice);
 	ierrSync = cudaMemcpy(barrier_gpu, barrier, sizeof(unsigned char) * W * H, cudaMemcpyHostToDevice);
 	ierrSync = cudaMemcpy(array1_gpu, array1, sizeof(lbm_node) * W * H, cudaMemcpyHostToDevice);
@@ -391,7 +392,7 @@ void exitfunc()
 	cudaFree(array2_gpu);
 	cudaFree(barrier_gpu);
 	cudaFree(params_gpu);
-	cudaFree(d2q9_gpu);
+	free_gpu();
 }
 
 //display stats of all detected cuda capable devices,
@@ -437,7 +438,7 @@ void render(int delta_t)
 	//launch cuda kernels to calculate LBM step
 	for (int i = 0; i < params.stepsPerRender; i++)
 	{
-		kernelLauncher(d_out);
+		launch_kernels(d_out);
 	}
 	//unmap the resources for next time
 	cudaGraphicsUnmapResources(1, &cuda_pbo_resource, 0);
