@@ -40,7 +40,7 @@
 #include <helper_cuda.h>
 
 #include "defines.h"
-#include "fluidsGL_kernels.h"
+#include "fluidsGL_kernels.cuh"
 
 #define MAX_EPSILON_ERROR 1.0f
 
