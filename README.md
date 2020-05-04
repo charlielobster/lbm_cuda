@@ -10,6 +10,5 @@ lbm_cuda is a Visual Studio 2019 solution created with a default CUDA 10.2 proje
 	1. glew64.dll
 	1. freeglut.dll
 
-
-The lbm project is taken and modified from Tom Scherlis and Henry Friedlander's "Lattice Boltzmann Simulator GPU accelerated with CUDA" codebase.
+The lbm project is an unofficial fork of Tom Scherlis and Henry Friedlander's "Lattice Boltzmann Simulator GPU accelerated with CUDA" repository located here: https://github.com/henryfriedlander/CUDA-LBM-simulator
 
