@@ -1,20 +1,12 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <time.h>
 #include <malloc.h>
 
-// OpenGL Graphics includes
-#define HELPERGL_EXTERN_GL_FUNC_IMPLEMENTATION
 #include <helper_gl.h>
 #include <GL/wglew.h>
 #include <GL/freeglut.h>
 
-//Cuda includes
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
-#include <device_launch_parameters.h>
-#include <helper_functions.h>
-#include <helper_cuda.h>
 
 #include "lbm.cuh"
 
@@ -52,6 +44,8 @@ cudaError_t ierrSync;
 char waitingForSpeed = 0;
 char waitingForViscosity = 0;
 char waitingForRate = 0;
+int current_button = GLUT_LEFT_BUTTON; 
+float fps;
 
 extern "C" void kernelLauncher(uchar4 * image);
 
@@ -132,12 +126,6 @@ void zeroSite(lbm_node* array, int index)
 	array[index].uy = 0;
 }
 
-void initBoundaries()
-{
-	int W = params.width;
-	int H = params.height;
-}
-
 void initFluid() 
 {
 	int W = params.width;
@@ -188,8 +176,6 @@ void initFluid()
 	ierrSync = cudaMemcpy(array2_gpu, array2, sizeof(lbm_node) * W * H, cudaMemcpyHostToDevice);
 
 	cudaDeviceSynchronize();
-
-	return;
 }
 
 //keyboard callback
@@ -316,8 +302,6 @@ void keyboard(unsigned char a, int b, int c)
 	}
 	needsUpdate = 1;
 }
-
-int current_button = GLUT_LEFT_BUTTON;
 
 void mouseClick(int button, int state, int x, int y)
 {
@@ -492,7 +476,6 @@ void display(int delta_t)
 
 // (gl idle callback) handle frame limitting, fps calculating, and call display functions
 // triggered when glutmainloop() is idle
-float fps;
 void update()
 {
 	//find time since last frame update. Will replace with timers later for precision beyond 1ms
@@ -554,7 +537,6 @@ int main(int argc, char** argv)
 	}
 
 	//allocate memory and initialize fluid arrays
-	initBoundaries();
 	getParams(&params);
 	initFluid();
 

@@ -1,26 +1,5 @@
-/* ============================================================ */
-/* LATTICE BOLTZMANN SIMULATOR                                  */
-/* GPU accelerated with CUDA                                    */
-/*                                                              */
-/* Copyright (c) 2017 Tom Scherlis and Henry Friedlander        */
-/* For SSA Physics 3                                            */
-/* ============================================================ */
-
-//comment out this line to hide prints:
-//#define DEBUG
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <malloc.h>
-
-// OpenGL Graphics includes
-#define HELPERGL_EXTERN_GL_FUNC_IMPLEMENTATION
 #include <helper_gl.h>
-#include <GL/wglew.h>
-#include <GL/freeglut.h>
-
-//Cuda includes
+#include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
 #include <device_launch_parameters.h>
@@ -60,7 +39,6 @@ int getIndex(int x, int y, parameter_set* params)
 __device__
 uchar4 getRGB_roh(float i, parameter_set* params)
 {
-
 	uchar4 val;
 	if (i == i)
 	{
@@ -125,7 +103,6 @@ float computeCurlMiddleCase(int x, int y, lbm_node * array1, parameter_set* para
 __device__
 uchar4 getRGB_curl(int x, int y, lbm_node* array, parameter_set* params)
 {
-
 	uchar4 val;
 	val.x = 0;
 	val.w = 255;
@@ -229,32 +206,6 @@ float accel_gen(int node_num, float ux, float uy, float u2, float rho, d2q9_node
 	return rho * d2q9[node_num].wt * unweighted;
 }
 
-__global__
-void collide(d2q9_node* d2q9, lbm_node* before, lbm_node* after, parameter_set* params, unsigned char* barrier)
-{
-	int x = blockIdx.x * blockDim.x + threadIdx.x;
-	int y = blockIdx.y * blockDim.y + threadIdx.y;
-	int i = getIndex(x, y, params);
-
-	float omega = 1 / (3 * params->viscosity + 0.5);
-
-	//toss out out of bounds
-	if (x<0 || x >= params->width || y<0 || y >= params->height)
-		return;
-
-	macro_gen(before[i].f, &(after[i].ux), &(after[i].uy), &(after[i].rho), i, params);
-
-	int dir = 0;
-	for (dir = 0; dir<9;dir += 1)
-	{
-		(after[i].f)[dir] = (before[i].f)[dir] + omega
-			* (accel_gen(dir, after[i].ux, after[i].uy,
-				after[i].ux * after[i].ux + after[i].uy
-				* after[i].uy, after[i].rho, d2q9) - (before[i].f)[dir]);
-	}
-	return;
-}
-
 __device__
 void doLeftWall(int x, int y, lbm_node* after, d2q9_node* d2q9, float v, parameter_set* params)
 {
@@ -312,6 +263,32 @@ void streamEdgeCases(int x, int y, lbm_node* after, unsigned char* barrier,
 			doFlanks(x, y, after, d2q9, params->v, params);
 		}
 	}
+}
+
+__global__
+void collide(d2q9_node* d2q9, lbm_node* before, lbm_node* after, parameter_set* params, unsigned char* barrier)
+{
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = blockIdx.y * blockDim.y + threadIdx.y;
+	int i = getIndex(x, y, params);
+
+	float omega = 1 / (3 * params->viscosity + 0.5);
+
+	//toss out out of bounds
+	if (x < 0 || x >= params->width || y < 0 || y >= params->height)
+		return;
+
+	macro_gen(before[i].f, &(after[i].ux), &(after[i].uy), &(after[i].rho), i, params);
+
+	int dir = 0;
+	for (dir = 0; dir < 9; dir += 1)
+	{
+		(after[i].f)[dir] = (before[i].f)[dir] + omega
+			* (accel_gen(dir, after[i].ux, after[i].uy,
+				after[i].ux * after[i].ux + after[i].uy
+				* after[i].uy, after[i].rho, d2q9) - (before[i].f)[dir]);
+	}
+	return;
 }
 
 //stream: handle particle propagation, ignoring edge cases.
@@ -412,7 +389,7 @@ extern "C" void kernelLauncher(uchar4* image)
 	ierrSync = cudaGetLastError();
 	ierrAsync = cudaDeviceSynchronize(); // Wait for the GPU to finish
 
-	bounceAndRender<<<number_of_blocks, threads_per_block >>>(d2q9_gpu, before, after, barrier_gpu, params_gpu, image, prex, prey);
+	bounceAndRender<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, before, after, barrier_gpu, params_gpu, image, prex, prey);
 
 	ierrSync = cudaGetLastError();
 	ierrAsync = cudaDeviceSynchronize(); // Wait for the GPU to finish
