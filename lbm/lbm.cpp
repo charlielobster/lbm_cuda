@@ -45,10 +45,13 @@ char needsUpdate = 1;
 int prex = -1;
 int prey = -1;
 
-
 //cuda error variables:
 cudaError_t ierrAsync;
 cudaError_t ierrSync;
+
+char waitingForSpeed = 0;
+char waitingForViscosity = 0;
+char waitingForRate = 0;
 
 extern "C" void kernelLauncher(uchar4 * image);
 
@@ -63,18 +66,11 @@ void getParams(parameter_set* params)
 	params->stepsPerRender = 10;
 }
 
-//------------------------------------------------------------------------------//
-//                                HELPER FUNCTIONS                              //
-//------------------------------------------------------------------------------//
-
 //get 1d flat index from row and col
-int getIndex_cpu(int x, int y) {
+int getIndex_cpu(int x, int y) 
+{
 	return y * params.width + x;
 }
-
-//-----------------------------------------------------------//
-//                  BARRIER FUNCTIONS                        //
-//-----------------------------------------------------------//
 
 void clearBarriers()
 {
@@ -103,7 +99,6 @@ void drawSquare()
 
 		for (int j = 0; j < params.height / 4; j++)
 		{
-			//if(i==0 || i== params.height / 4-1 || j==0 || j == params.height / 4-1)
 			barrier[getIndex_cpu(i + params.width / 3, j + params.height * 3 / 8)] = 1;
 		}
 
@@ -114,17 +109,16 @@ void drawSquare()
 //assumes positive is up and right, whereas our program assumes positive down and right.
 void init_d2q9(d2q9_node* d2q9)
 {
-	d2q9[0].ex = 0;	d2q9[0].ey = 0;	d2q9[0].wt = 4.0 / 9.0;	d2q9[0].op = 0;
-	d2q9[1].ex = 1;	d2q9[1].ey = 0;	d2q9[1].wt = 1.0 / 9.0;	d2q9[1].op = 3;
-	d2q9[2].ex = 0;	d2q9[2].ey = 1;	d2q9[2].wt = 1.0 / 9.0;	d2q9[2].op = 4;
-	d2q9[3].ex = -1;	d2q9[3].ey = 0;	d2q9[3].wt = 1.0 / 9.0;	d2q9[3].op = 1;
-	d2q9[4].ex = 0;	d2q9[4].ey = -1;	d2q9[4].wt = 1.0 / 9.0;	d2q9[4].op = 2;
-	d2q9[5].ex = 1;	d2q9[5].ey = 1;	d2q9[5].wt = 1.0 / 36.0;	d2q9[5].op = 7;
-	d2q9[6].ex = -1;	d2q9[6].ey = 1;	d2q9[6].wt = 1.0 / 36.0;	d2q9[6].op = 8;
+	d2q9[0].ex = 0;		d2q9[0].ey = 0;		d2q9[0].wt = 4.0 / 9.0;		d2q9[0].op = 0;
+	d2q9[1].ex = 1;		d2q9[1].ey = 0;		d2q9[1].wt = 1.0 / 9.0;		d2q9[1].op = 3;
+	d2q9[2].ex = 0;		d2q9[2].ey = 1;		d2q9[2].wt = 1.0 / 9.0;		d2q9[2].op = 4;
+	d2q9[3].ex = -1;	d2q9[3].ey = 0;		d2q9[3].wt = 1.0 / 9.0;		d2q9[3].op = 1;
+	d2q9[4].ex = 0;		d2q9[4].ey = -1;	d2q9[4].wt = 1.0 / 9.0;		d2q9[4].op = 2;
+	d2q9[5].ex = 1;		d2q9[5].ey = 1;		d2q9[5].wt = 1.0 / 36.0;	d2q9[5].op = 7;
+	d2q9[6].ex = -1;	d2q9[6].ey = 1;		d2q9[6].wt = 1.0 / 36.0;	d2q9[6].op = 8;
 	d2q9[7].ex = -1;	d2q9[7].ey = -1;	d2q9[7].wt = 1.0 / 36.0;	d2q9[7].op = 5;
-	d2q9[8].ex = 1;	d2q9[8].ey = -1;	d2q9[8].wt = 1.0 / 36.0;	d2q9[8].op = 6;
+	d2q9[8].ex = 1;		d2q9[8].ey = -1;	d2q9[8].wt = 1.0 / 36.0;	d2q9[8].op = 6;
 }
-
 
 void zeroSite(lbm_node* array, int index)
 {
@@ -144,7 +138,8 @@ void initBoundaries()
 	int H = params.height;
 }
 
-void initFluid() {
+void initFluid() 
+{
 	int W = params.width;
 	int H = params.height;
 	float v = params.v;
@@ -209,14 +204,6 @@ void initFluid() {
 	return;
 }
 
-//-----------------------------------------------------------//
-//              OPENGL CALLBACK FUNCTIONS                    //
-//-----------------------------------------------------------//
-char waitingForSpeed = 0;
-char waitingForViscosity = 0;
-char waitingForRate = 0;
-
-
 //keyboard callback
 void keyboard(unsigned char a, int b, int c)
 {
@@ -256,11 +243,9 @@ void keyboard(unsigned char a, int b, int c)
 			break;
 		case'a':
 			clearBarriers();
-			//drawLineLong();
 			break;
 		case's':
 			clearBarriers();
-			//drawLineShort();
 			break;
 		case'd':
 			clearBarriers();
@@ -344,12 +329,6 @@ void keyboard(unsigned char a, int b, int c)
 		printf("refresh rate set to %d\n", params.stepsPerRender);
 	}
 	needsUpdate = 1;
-}
-
-//special keyboard callback
-void handleSpecialKeypress(int a, int b, int c)
-{
-
 }
 
 int current_button = GLUT_LEFT_BUTTON;
@@ -473,14 +452,9 @@ int deviceQuery()
 	return nDevices;
 }
 
-
-
-//----------------------------------------------------------------------------//
-//               RENDERING AND DISPLAY FUNCTIONS                              //
-//----------------------------------------------------------------------------//
-
 //render the image (but do not display it yet)
-void render(int delta_t) {
+void render(int delta_t) 
+{
 	//reset image pointer
 	uchar4* d_out = 0;
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -500,7 +474,8 @@ void render(int delta_t) {
 }
 
 //update textures to reflect texture memory
-void drawTextureScaled() {
+void drawTextureScaled() 
+{
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, params.width, params.height,
 		0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
@@ -515,8 +490,8 @@ void drawTextureScaled() {
 }
 
 //update the live display
-void display(int delta_t) {
-
+void display(int delta_t) 
+{
 	//launch cuda kernels to update Lattice-Boltzmann,
 	//flip front and back LBM buffers,
 	//and update texture memory
@@ -553,7 +528,8 @@ void update()
 }
 
 //creates and binds texture memory
-void initPixelBuffer() {
+void initPixelBuffer() 
+{
 	glGenBuffers(1, &pbo);
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
 	glBufferData(GL_PIXEL_UNPACK_BUFFER, 4 * params.width * params.height
@@ -573,7 +549,6 @@ void initGLUT(int* argc, char** argv)
 	glewInit();
 	gluOrtho2D(0, params.width, params.height, 0);
 	glutKeyboardFunc(keyboard);
-	glutSpecialFunc(handleSpecialKeypress);
 	glutPassiveMotionFunc(mouseMove);
 	glutMouseFunc(mouseClick);
 	glutMotionFunc(mouseDrag);

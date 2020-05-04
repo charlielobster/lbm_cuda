@@ -29,20 +29,7 @@
 
 #include "lbm.cuh"
 
-//// texture and pixel objects
-//GLuint pbo = 0;     // OpenGL pixel buffer object
-//GLuint tex = 0;     // OpenGL texture object
-extern struct cudaGraphicsResource* cuda_pbo_resource;
-//
-////timing variables:
-//unsigned long last_draw_time = 0;
-//unsigned long current_draw_time = 0;
-//float delta_t = 1;
-//
 extern parameter_set params;
-//
-////GPU/CPU interop memory pointers:
-//unsigned char state = 0;
 extern lbm_node* array1;
 extern lbm_node* array2;
 extern lbm_node* array1_gpu;
@@ -51,27 +38,15 @@ extern unsigned char* barrier;
 extern unsigned char* barrier_gpu;
 extern d2q9_node* d2q9_gpu;
 extern parameter_set* params_gpu;
-//
 extern char needsUpdate;
 extern int prex;
 extern int prey;
-//
-//
-////cuda error variables:
 extern cudaError_t ierrAsync;
 extern cudaError_t ierrSync;
 
-
-//-----------------------------------------------------------------------//
-//                     GLOBAL VARS AND STRUCT DEFS                       //
-//-----------------------------------------------------------------------//
-
-
-//--------------------------------------------------------------------------------//
-//                   CUDA HELPER AND RENDER FUNCTIONS                             //
-//--------------------------------------------------------------------------------//
 __device__
-unsigned char clip(int n) {
+unsigned char clip(int n) 
+{
 	return n > 255 ? 255 : (n < 0 ? 0 : n);
 }
 
@@ -161,7 +136,8 @@ uchar4 getRGB_u(float i)
 }
 
 __device__
-float computeCurlMiddleCase(int x, int y, lbm_node * array1, parameter_set* params) {
+float computeCurlMiddleCase(int x, int y, lbm_node * array1, parameter_set* params) 
+{
 	return (array1[getIndex(x, y + 1, params)].ux
 		- array1[getIndex(x, y - 1, params)].ux)
 		- (array1[getIndex(x + 1, y, params)].uy
@@ -177,7 +153,6 @@ uchar4 getRGB_curl(int x, int y, lbm_node* array, parameter_set* params)
 	val.w = 255;
 	if (0 < x && x < params->width - 1) {
 		if (0 < y && y < params->height - 1) {
-			//picture[getIndex(x,y)]
 			if (computeCurlMiddleCase(x, y, array, params) > 0)
 			{
 				val.y = clip(20 * params->contrast * computeCurlMiddleCase(x, y, array, params));
@@ -189,10 +164,6 @@ uchar4 getRGB_curl(int x, int y, lbm_node* array, parameter_set* params)
 				val.y = 0;
 			}
 		}
-		//else {
-		//	//picture[getIndex(x,y)]
-		//	colorIndex = (int)(nColors * (0.5 + computeCurlEdgeCase(col, row, array) * contrast * 0.3));
-		//}
 	}
 
 	if (array[getIndex(x, y, params)].rho != array[getIndex(x, y, params)].rho)
@@ -247,10 +218,6 @@ void computeColor(lbm_node* array, int x, int y, parameter_set* params, uchar4* 
 		image[i].w = 255;
 	}
 }
-
-//--------------------------------------------------------------------------------//
-//                   CUDA COLLIDE STEP KERNEL AND DEVICES                         //
-//--------------------------------------------------------------------------------//
 
 __device__
 void macro_gen(float* f, float* ux, float* uy, float* rho, int i, parameter_set* params)
@@ -324,14 +291,9 @@ void collide(d2q9_node* d2q9, lbm_node* before, lbm_node* after, parameter_set* 
 	return;
 }
 
-
-//--------------------------------------------------------------------------------//
-//                   CUDA STREAM STEP KERNEL AND DEVICES                          //
-//--------------------------------------------------------------------------------//
 __device__
 void doLeftWall(int x, int y, lbm_node* after, d2q9_node* d2q9, float v, parameter_set* params)
 {
-	//DEBUG_PRINT(("setting left wall to %.6f (wt: %.3f, v: %.3f)\n", d2q9[dE].wt  * (1 + 3 * v + 3 * v * v), d2q9[dE].wt,v));
 	(after[getIndex(x, y, params)].f)[dE] = d2q9[dE].wt  * (1 + 3 * v + 3 * v * v);
 	(after[getIndex(x, y, params)].f)[dNE] = d2q9[dNE].wt * (1 + 3 * v + 3 * v * v);
 	(after[getIndex(x, y, params)].f)[dSE] = d2q9[dSE].wt * (1 + 3 * v + 3 * v * v);
@@ -369,7 +331,6 @@ void streamEdgeCases(int x, int y, lbm_node* after, unsigned char* barrier,
 	{
 		if (barrier[getIndex(x, y, params)] != 1)
 		{
-			//DEBUG_PRINT(("doing left wall!"));
 			doLeftWall(x, y, after, d2q9, params->v, params);
 		}
 	}
@@ -430,17 +391,6 @@ void stream(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
 	}
 }
 
-//--------------------------------------------------------------------------------//
-//                   CUDA BOUNCE STEP KERNEL AND DEVICES                          //
-//--------------------------------------------------------------------------------//
-
-/*__device__
-void bounceEdgeCases(int x, int y, lbm_node* after, unsigned char* barrier,
-parameter_set* params, d2q9_node* d2q9)
-{
-
-}*/
-
 __global__
 void bounceAndRender(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
 	unsigned char* barrier, parameter_set* params, uchar4* image, int prex, int prey)
@@ -470,18 +420,9 @@ void bounceAndRender(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
 				{
 					(after[getIndex(d2q9[dir].ex + x, -d2q9[dir].ey + y, params)].f)[dir]
 						= (before[i].f)[d2q9[dir].op];
-					//printf("doin a barrier bounce! %d\n",dir);
-					//(after[i].f)[dir] += (after[i].f)[d2q9[dir].op];
-					//	+ (after[i].f)[dir];
-					//(after[i].f)[d2q9[dir].op] = 0;
-
 				}
 			}
 		}
-	}
-	else
-	{
-		//bounceEdgeCases(x, y, after, barrier, params, d2q9);
 	}
 
 	if (x == trace_x && y == trace_y)
@@ -492,10 +433,6 @@ void bounceAndRender(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
 
 	computeColor(after, x, y, params, image, barrier, prex, prey);
 }
-
-//--------------------------------------------------------------------------------//
-//                        CUDA INITIALIZER FUNCTIONS                              //
-//--------------------------------------------------------------------------------//
 
 //determine front and back lattice buffer orientation
 //and launch all 3 LBM kernels

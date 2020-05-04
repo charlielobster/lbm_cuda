@@ -38,7 +38,7 @@ typedef struct {
 
 	float rho;	//density. aka rho
 	float f[9];
-}lbm_node;
+} lbm_node;
 
 
 typedef struct {
@@ -46,7 +46,7 @@ typedef struct {
 	char ey; //y location
 	float wt; //weight
 	unsigned char op; //opposite char
-}d2q9_node;
+} d2q9_node;
 
 typedef struct {
 	float viscosity;
@@ -57,6 +57,6 @@ typedef struct {
 	float v;
 	unsigned char mode;
 	unsigned int stepsPerRender;
-}parameter_set;
+} parameter_set;
 
 #endif
