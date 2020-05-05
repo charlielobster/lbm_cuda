@@ -5,15 +5,11 @@
 #include <GL/wglew.h>
 #include <GL/freeglut.h>
 
-#include <cuda_runtime.h>
-#include <cuda_gl_interop.h>
-
 #include "lbm.cuh"
 
 // texture and pixel objects
 GLuint pbo = 0;     // OpenGL pixel buffer object
 GLuint tex = 0;     // OpenGL texture object
-struct cudaGraphicsResource* cuda_pbo_resource;
 
 //timing variables:
 unsigned long last_draw_time = 0;
@@ -28,18 +24,9 @@ lbm_node* array1;
 lbm_node* array2;
 unsigned char* barrier;
 
-lbm_node* array1_gpu;
-lbm_node* array2_gpu;
-unsigned char* barrier_gpu;
-parameter_set* params_gpu;
-
 char needsUpdate = 1;
 int prex = -1;
 int prey = -1;
-
-//cuda error variables:
-cudaError_t ierrAsync;
-cudaError_t ierrSync;
 
 char waitingForSpeed = 0;
 char waitingForViscosity = 0;
@@ -47,9 +34,11 @@ char waitingForRate = 0;
 int current_button = GLUT_LEFT_BUTTON; 
 float fps;
 
-extern "C" void init_gpu(d2q9_node * d2q9);
-extern "C" void free_gpu();
-extern "C" void launch_kernels(uchar4 * image);
+extern "C" int deviceQuery();
+extern "C" void initCUDA(d2q9_node * d2q9, int W, int H);
+extern "C" void initPboResource(GLuint pbo); 
+extern "C" void render(int delta_t);
+extern "C" void freeCUDA();
 
 void getParams(parameter_set* params)
 {
@@ -92,18 +81,16 @@ void drawSquare()
 {
 	for (int i = 0; i < params.height / 4; i++)
 	{
-
 		for (int j = 0; j < params.height / 4; j++)
 		{
 			barrier[getIndex_cpu(i + params.width / 3, j + params.height * 3 / 8)] = 1;
 		}
-
 	}
 }
 
 //provide LBM constants for d2q9 style nodes
 //assumes positive is up and right, whereas our program assumes positive down and right.
-void init_d2q9(d2q9_node* d2q9)
+void initD2q9(d2q9_node* d2q9)
 {
 	d2q9[0].ex = 0;		d2q9[0].ey = 0;		d2q9[0].wt = 4.0 / 9.0;		d2q9[0].op = 0;
 	d2q9[1].ex = 1;		d2q9[1].ey = 0;		d2q9[1].wt = 1.0 / 9.0;		d2q9[1].op = 3;
@@ -128,55 +115,46 @@ void zeroSite(lbm_node* array, int index)
 	array[index].uy = 0;
 }
 
-void initFluid() 
+void initArray1(d2q9_node * d2q9, float v, int W, int H)
 {
-	int W = params.width;
-	int H = params.height;
-	float v = params.v;
-
-	barrier = (unsigned char*)calloc(W * H, sizeof(unsigned char));
-	array1 = (lbm_node*)calloc(W * H, sizeof(lbm_node));
-	array2 = (lbm_node*)calloc(W * H, sizeof(lbm_node));
-
-	lbm_node* before = array1;
-
-	d2q9_node* d2q9 = (d2q9_node*)calloc(9, sizeof(d2q9_node));
-	init_d2q9(d2q9);
-
+	array1 = (lbm_node*)calloc(W * H, sizeof(lbm_node));	
 	int i;
 	for (int x = 0; x < params.width; x++)
 	{
 		for (int y = 0; y < params.height; y++)
 		{
 			i = getIndex_cpu(x, y);
-			(before[i].f)[d0] = d2q9[d0].wt * (1 - 1.5 * v * v);
-			(before[i].f)[dE] = d2q9[dE].wt * (1 + 3 * v + 3 * v * v);
-			(before[i].f)[dW] = d2q9[dW].wt * (1 - 3 * v + 3 * v * v);
-			(before[i].f)[dN] = d2q9[dN].wt * (1 - 1.5 * v * v);
-			(before[i].f)[dS] = d2q9[dS].wt * (1 - 1.5 * v * v);
-			(before[i].f)[dNE] = d2q9[dNE].wt * (1 + 3 * v + 3 * v * v);
-			(before[i].f)[dSE] = d2q9[dSE].wt * (1 + 3 * v + 3 * v * v);
-			(before[i].f)[dNW] = d2q9[dNW].wt * (1 - 3 * v + 3 * v * v);
-			(before[i].f)[dSW] = d2q9[dSW].wt * (1 - 3 * v + 3 * v * v);
-			before[i].rho = 1;
-			before[i].ux = params.v;
-			before[i].uy = 0;
+			(array1[i].f)[d0] = d2q9[d0].wt * (1 - 1.5 * v * v);
+			(array1[i].f)[dE] = d2q9[dE].wt * (1 + 3 * v + 3 * v * v);
+			(array1[i].f)[dW] = d2q9[dW].wt * (1 - 3 * v + 3 * v * v);
+			(array1[i].f)[dN] = d2q9[dN].wt * (1 - 1.5 * v * v);
+			(array1[i].f)[dS] = d2q9[dS].wt * (1 - 1.5 * v * v);
+			(array1[i].f)[dNE] = d2q9[dNE].wt * (1 + 3 * v + 3 * v * v);
+			(array1[i].f)[dSE] = d2q9[dSE].wt * (1 + 3 * v + 3 * v * v);
+			(array1[i].f)[dNW] = d2q9[dNW].wt * (1 - 3 * v + 3 * v * v);
+			(array1[i].f)[dSW] = d2q9[dSW].wt * (1 - 3 * v + 3 * v * v);
+			array1[i].rho = 1;
+			array1[i].ux = params.v;
+			array1[i].uy = 0;
 		}
 	}
+}
 
-	init_gpu(d2q9);
-	ierrSync = cudaMalloc(&params_gpu, sizeof(parameter_set));
-	ierrSync = cudaMalloc(&barrier_gpu, sizeof(unsigned char) * W * H);
-	ierrSync = cudaMalloc(&array1_gpu, sizeof(lbm_node) * W * H);
-	ierrSync = cudaMalloc(&array2_gpu, sizeof(lbm_node) * W * H);
+void initFluid() 
+{
+	int W = params.width;
+	int H = params.height;
+	float v = params.v;
 
+	initPboResource(pbo);
 
-	ierrSync = cudaMemcpy(params_gpu, &params, sizeof(params), cudaMemcpyHostToDevice);
-	ierrSync = cudaMemcpy(barrier_gpu, barrier, sizeof(unsigned char) * W * H, cudaMemcpyHostToDevice);
-	ierrSync = cudaMemcpy(array1_gpu, array1, sizeof(lbm_node) * W * H, cudaMemcpyHostToDevice);
-	ierrSync = cudaMemcpy(array2_gpu, array2, sizeof(lbm_node) * W * H, cudaMemcpyHostToDevice);
+	barrier = (unsigned char*)calloc(W * H, sizeof(unsigned char));
+	array2 = (lbm_node*)calloc(W * H, sizeof(lbm_node));
 
-	cudaDeviceSynchronize();
+	d2q9_node* d2q9 = (d2q9_node*)calloc(9, sizeof(d2q9_node));
+	initD2q9(d2q9);
+	initArray1(d2q9, v, W, H);	
+	initCUDA(d2q9, W, H);
 }
 
 //keyboard callback
@@ -383,65 +361,11 @@ void exitfunc()
 	//empty all cuda resources
 	if (pbo)
 	{
-		cudaGraphicsUnregisterResource(cuda_pbo_resource);
 		glDeleteBuffers(1, &pbo);
 		glDeleteTextures(1, &tex);
 	}
 
-	cudaFree(array1_gpu);
-	cudaFree(array2_gpu);
-	cudaFree(barrier_gpu);
-	cudaFree(params_gpu);
-	free_gpu();
-}
-
-//display stats of all detected cuda capable devices,
-//and return the number
-int deviceQuery()
-{
-	cudaDeviceProp prop;
-	int nDevices = 1;
-	cudaError_t ierr;
-
-
-	ierr = cudaGetDeviceCount(&nDevices);
-
-	int i = 0;
-	for (i = 0; i < nDevices; ++i)
-	{
-		ierr = cudaGetDeviceProperties(&prop, i);
-		printf("Device number: %d\n", i);
-		printf("  Device name: %s\n", prop.name);
-		printf("  Compute capability: %d.%d\n", prop.major, prop.minor);
-		printf("  Max threads per block: %d\n", prop.maxThreadsPerBlock);
-		printf("  Max threads in X-dimension of block: %d\n", prop.maxThreadsDim[0]);
-		printf("  Max threads in Y-dimension of block: %d\n", prop.maxThreadsDim[1]);
-		printf("  Max threads in Z-dimension of block: %d\n\n", prop.maxThreadsDim[2]);
-		if (ierr != cudaSuccess) { printf("error: %s\n", cudaGetErrorString(ierr)); }
-	}
-
-	return nDevices;
-}
-
-//render the image (but do not display it yet)
-void render(int delta_t) 
-{
-	//reset image pointer
-	uchar4* d_out = 0;
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-	//set d_out as a texture memory pointer
-	cudaGraphicsMapResources(1, &cuda_pbo_resource, 0);
-	cudaGraphicsResourceGetMappedPointer((void**)&d_out, NULL, cuda_pbo_resource);
-
-
-	//launch cuda kernels to calculate LBM step
-	for (int i = 0; i < params.stepsPerRender; i++)
-	{
-		launch_kernels(d_out);
-	}
-	//unmap the resources for next time
-	cudaGraphicsUnmapResources(1, &cuda_pbo_resource, 0);
+	freeCUDA();
 }
 
 //update textures to reflect texture memory
@@ -463,6 +387,9 @@ void drawTextureScaled()
 //update the live display
 void display(int delta_t) 
 {
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);	
+
 	//launch cuda kernels to update Lattice-Boltzmann,
 	//flip front and back LBM buffers,
 	//and update texture memory
@@ -496,19 +423,6 @@ void update()
 	display(delta_t);
 }
 
-//creates and binds texture memory
-void initPixelBuffer() 
-{
-	glGenBuffers(1, &pbo);
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
-	glBufferData(GL_PIXEL_UNPACK_BUFFER, 4 * params.width * params.height
-		* sizeof(GLubyte), 0, GL_STREAM_DRAW);
-	glGenTextures(1, &tex);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	cudaGraphicsGLRegisterBuffer(&cuda_pbo_resource, pbo, cudaGraphicsMapFlagsWriteDiscard);
-}
-
 void initGLUT(int* argc, char** argv) 
 {
 	glutInit(argc, argv);
@@ -523,7 +437,13 @@ void initGLUT(int* argc, char** argv)
 	glutMotionFunc(mouseDrag);
 	glutDisplayFunc(update);
 	glutIdleFunc(update);
-	initPixelBuffer();
+	glGenBuffers(1, &pbo);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, 4 * params.width * params.height
+		* sizeof(GLubyte), 0, GL_STREAM_DRAW);
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 }
 
 int main(int argc, char** argv) 
@@ -537,12 +457,12 @@ int main(int argc, char** argv)
 		return 0; //return if no cuda-capable hardware is present
 	}
 
-	//allocate memory and initialize fluid arrays
 	getParams(&params);
-	initFluid();
 
 	//construct output window
 	initGLUT(&argc, argv);
+
+	initFluid();
 
 	//run gl main loop!
 	glutMainLoop();
