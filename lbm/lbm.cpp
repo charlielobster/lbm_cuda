@@ -36,7 +36,7 @@ void initParams(parameter_set* params)
 	params->viscosity = 0.005;
 	params->contrast = 75;
 	params->v = 0.1;
-	params->mode = mCurl;
+	params->mode = CURL;
 	params->height = 256;
 	params->width = 512;
 	params->stepsPerRender = 10;
@@ -158,23 +158,23 @@ void keyboard(unsigned char a, int b, int c)
 		switch (a)
 		{
 		case'1':
-			params.mode = mRho;
+			params.mode = RHO;
 			printf("render mode set to rho\n");
 			break;
 		case'2':
-			params.mode = mCurl;
+			params.mode = CURL;
 			printf("render mode set to curl\n");
 			break;
 		case'3':
-			params.mode = mSpeed;
+			params.mode = SPEED;
 			printf("render mode set to speed\n");
 			break;
 		case'4':
-			params.mode = mUx;
+			params.mode = UX;
 			printf("render mode set to Ux\n");
 			break;
 		case'5':
-			params.mode = mUy;
+			params.mode = UY;
 			printf("render mode set to Uy\n");
 			break;
 		case'q':

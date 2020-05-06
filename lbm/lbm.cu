@@ -143,19 +143,19 @@ void computeColor(lbm_node* array, int x, int y, parameter_set* params, uchar4* 
 	{
 		switch (params->mode)
 		{
-		case(mRho):
+		case(RHO):
 			image[i] = getRgbRho(array[i].rho, params);
 			break;
-		case(mCurl):
+		case(CURL):
 			image[i] = getRgbCurl(x, y, array, params);
 			break;
-		case(mSpeed):
+		case(SPEED):
 			image[i] = getRgbU(sqrt(array[i].ux * array[i].ux + array[i].uy * array[i].uy));
 			break;
-		case(mUx):
+		case(UX):
 			image[i] = getRgbU(array[i].ux);
 			break;
-		case(mUy):
+		case(UY):
 			image[i] = getRgbU(array[i].uy);
 			break;
 		}

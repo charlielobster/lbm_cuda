@@ -16,12 +16,12 @@ enum direction {
 	SOUTHEAST
 };
 
-enum render_modes {
-	mRho,
-	mCurl,
-	mSpeed,
-	mUx,
-	mUy
+enum renderMode {
+	RHO,
+	CURL,
+	SPEED,
+	UX,
+	UY
 };
 
 typedef struct {
