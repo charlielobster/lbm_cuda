@@ -24,10 +24,6 @@ lbm_node* array1;
 lbm_node* array2;
 unsigned char* barrier;
 
-char needsUpdate = 1;
-int prex = -1;
-int prey = -1;
-
 char waitingForSpeed = 0;
 char waitingForViscosity = 0;
 char waitingForRate = 0;
@@ -35,20 +31,24 @@ int current_button = GLUT_LEFT_BUTTON;
 float fps;
 
 extern "C" int deviceQuery();
-extern "C" void initCUDA(d2q9_node * d2q9, int W, int H);
+extern "C" void initCUDA(d2q9_node * d2q9, parameter_set * params, int W, int H,
+	lbm_node * array1, lbm_node * array2, unsigned char* barrier);
 extern "C" void initPboResource(GLuint pbo); 
-extern "C" void render(int delta_t);
+extern "C" void render(int delta_t, parameter_set* params, unsigned char* barrier);
 extern "C" void freeCUDA();
 
 void getParams(parameter_set* params)
 {
+	params->needsUpdate = 1;
 	params->viscosity = 0.005;
 	params->contrast = 75;
 	params->v = 0.1;
 	params->mode = mCurl;
-	params->height = 200;
-	params->width = 300;
+	params->height = 256;
+	params->width = 512;
 	params->stepsPerRender = 10;
+	params->prex = -1;
+	params->prey = -1;
 }
 
 //get 1d flat index from row and col
@@ -154,7 +154,7 @@ void initFluid()
 	d2q9_node* d2q9 = (d2q9_node*)calloc(9, sizeof(d2q9_node));
 	initD2q9(d2q9);
 	initArray1(d2q9, v, W, H);	
-	initCUDA(d2q9, W, H);
+	initCUDA(d2q9, &params, W, H, array1, array2, barrier);
 }
 
 //keyboard callback
@@ -279,7 +279,7 @@ void keyboard(unsigned char a, int b, int c)
 		waitingForRate = 0;
 		printf("refresh rate set to %d\n", params.stepsPerRender);
 	}
-	needsUpdate = 1;
+	params.needsUpdate = 1;
 }
 
 void mouseClick(int button, int state, int x, int y)
@@ -297,7 +297,7 @@ void mouseClick(int button, int state, int x, int y)
 				return;
 
 			barrier[getIndex_cpu(lx, ly)] = 1;
-			needsUpdate = 1;
+			params.needsUpdate = 1;
 		}
 		else if (button == GLUT_RIGHT_BUTTON)
 		{
@@ -310,7 +310,7 @@ void mouseClick(int button, int state, int x, int y)
 				return;
 
 			barrier[getIndex_cpu(lx, ly)] = 0;
-			needsUpdate = 1;
+			params.needsUpdate = 1;
 		}
 	}
 }
@@ -326,8 +326,8 @@ void mouseMove(int x, int y)
 	if (lx >= params.width || ly >= params.height)
 		return;
 
-	prex = lx;
-	prey = ly;
+	params.prex = lx;
+	params.prey = ly;
 }
 
 //mouse drag callback
@@ -340,8 +340,8 @@ void mouseDrag(int x, int y)
 	if (lx >= params.width || ly >= params.height)
 		return;
 
-	prex = lx;
-	prey = ly;
+	params.prex = lx;
+	params.prey = ly;
 
 	if (current_button == GLUT_LEFT_BUTTON)
 	{
@@ -352,7 +352,7 @@ void mouseDrag(int x, int y)
 		barrier[getIndex_cpu(lx, ly)] = 0;
 	}
 
-	needsUpdate = 1;
+	params.needsUpdate = 1;
 }
 
 //gl exit callback
@@ -393,7 +393,7 @@ void display(int delta_t)
 	//launch cuda kernels to update Lattice-Boltzmann,
 	//flip front and back LBM buffers,
 	//and update texture memory
-	render(delta_t);
+	render(delta_t, &params, barrier);
 
 	//redraw textures
 	drawTextureScaled();

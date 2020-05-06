@@ -28,7 +28,6 @@ typedef struct {
 	//velocities:
 	float ux;	//x velocity
 	float uy;	//y velocity
-
 	float rho;	//density. aka rho
 	float f[9];
 } lbm_node;
@@ -42,6 +41,9 @@ typedef struct {
 } d2q9_node;
 
 typedef struct {
+	int needsUpdate;
+	int prex;
+	int prey;
 	float viscosity;
 	float omega;
 	unsigned int height;

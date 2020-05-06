@@ -8,14 +8,6 @@
 
 #include "lbm.cuh"
 
-extern parameter_set params;
-extern lbm_node* array1;
-extern lbm_node* array2;
-extern unsigned char* barrier;
-extern char needsUpdate;
-extern int prex;
-extern int prey;
-
 cudaError_t ierrAsync;
 cudaError_t ierrSync;
 
@@ -135,10 +127,10 @@ uchar4 getRgbCurl(int x, int y, lbm_node* array, parameter_set* params)
 }
 
 __device__
-void computeColor(lbm_node* array, int x, int y, parameter_set* params, uchar4* image, unsigned char* barrier, int prex, int prey)
+void computeColor(lbm_node* array, int x, int y, parameter_set* params, uchar4* image, unsigned char* barrier)
 {
 	int i = getIndex(x, y, params);
-	int prei = getIndex(prex, prey, params);
+	int prei = getIndex(params->prex, params->prey, params);
 
 	if (barrier[i] == 1)
 	{
@@ -331,7 +323,7 @@ void stream(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
 
 __global__
 void bounceAndRender(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
-	unsigned char* barrier, parameter_set* params, uchar4* image, int prex, int prey)
+	unsigned char* barrier, parameter_set* params, uchar4* image)
 {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -357,7 +349,7 @@ void bounceAndRender(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
 		}
 	}
 
-	computeColor(after, x, y, params, image, barrier, prex, prey);
+	computeColor(after, x, y, params, image, barrier);
 }
 
 //display stats of all detected cuda capable devices, and return the number
@@ -394,7 +386,8 @@ void initPboResource(GLuint pbo)
 }
 
 extern "C" 
-void initCUDA(d2q9_node * d2q9, int W, int H)
+void initCUDA(d2q9_node * d2q9, parameter_set *params, int W, int H, 
+	lbm_node* array1, lbm_node* array2, unsigned char* barrier)
 {
 	ierrSync = cudaMalloc(&d2q9_gpu, 9 * sizeof(d2q9_node));
 	ierrSync = cudaMalloc(&params_gpu, sizeof(parameter_set));
@@ -403,7 +396,7 @@ void initCUDA(d2q9_node * d2q9, int W, int H)
 	ierrSync = cudaMalloc(&array2_gpu, sizeof(lbm_node) * W * H);
 
 	ierrSync = cudaMemcpy(d2q9_gpu, d2q9, sizeof(d2q9_node) * 9, cudaMemcpyHostToDevice);
-	ierrSync = cudaMemcpy(params_gpu, &params, sizeof(params), cudaMemcpyHostToDevice);
+	ierrSync = cudaMemcpy(params_gpu, params, sizeof(*params), cudaMemcpyHostToDevice);
 	ierrSync = cudaMemcpy(barrier_gpu, barrier, sizeof(unsigned char) * W * H, cudaMemcpyHostToDevice);
 	ierrSync = cudaMemcpy(array1_gpu, array1, sizeof(lbm_node) * W * H, cudaMemcpyHostToDevice);
 	ierrSync = cudaMemcpy(array2_gpu, array2, sizeof(lbm_node) * W * H, cudaMemcpyHostToDevice);
@@ -424,7 +417,7 @@ void freeCUDA()
 
 //render the image (but do not display it yet)
 extern "C"
-void render(int delta_t)
+void render(int delta_t, parameter_set* params, unsigned char* barrier)
 {
 	//reset image pointer
 	uchar4* d_out = 0;
@@ -434,13 +427,13 @@ void render(int delta_t)
 	cudaGraphicsResourceGetMappedPointer((void**)&d_out, NULL, cuda_pbo_resource);
 
 	//launch cuda kernels to calculate LBM step
-	for (int i = 0; i < params.stepsPerRender; i++)
+	for (int i = 0; i < params->stepsPerRender; i++)
 	{
-		if (needsUpdate)
+		if (params->needsUpdate)
 		{
-			cudaMemcpy(barrier_gpu, barrier, sizeof(unsigned char) * params.width * params.height, cudaMemcpyHostToDevice);
-			cudaMemcpy(params_gpu, &params, sizeof(params), cudaMemcpyHostToDevice);
-			needsUpdate = 0;
+			cudaMemcpy(barrier_gpu, barrier, sizeof(unsigned char) * params->width * params->height, cudaMemcpyHostToDevice);
+			cudaMemcpy(params_gpu, params, sizeof(*params), cudaMemcpyHostToDevice);
+			params->needsUpdate = 0;
 			cudaDeviceSynchronize(); // Wait for the GPU to finish
 		}
 
@@ -449,7 +442,7 @@ void render(int delta_t)
 
 		//determine number of threads and blocks required
 		dim3 threads_per_block = dim3(32, 32, 1);
-		dim3 number_of_blocks = dim3(params.width / 32 + 1, params.height / 32 + 1, 1);
+		dim3 number_of_blocks = dim3(params->width / 32 + 1, params->height / 32 + 1, 1);
 
 		collide<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, before, after, params_gpu, barrier_gpu);
 
@@ -464,7 +457,7 @@ void render(int delta_t)
 		ierrSync = cudaGetLastError();
 		ierrAsync = cudaDeviceSynchronize(); // Wait for the GPU to finish
 
-		bounceAndRender<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, before, after, barrier_gpu, params_gpu, d_out, prex, prey);
+		bounceAndRender<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, before, after, barrier_gpu, params_gpu, d_out);
 
 		ierrSync = cudaGetLastError();
 		ierrAsync = cudaDeviceSynchronize(); // Wait for the GPU to finish	
