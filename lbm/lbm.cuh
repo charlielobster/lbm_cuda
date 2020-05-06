@@ -4,16 +4,16 @@
 #define trace_x 50
 #define trace_y 57
 
-enum directions {
-	d0 = 0,
-	dE,
-	dN,
-	dW,
-	dS,
-	dNE,
-	dNW,
-	dSW,
-	dSE
+enum direction {
+	NONE = 0,
+	EAST,
+	NORTH,
+	WEST,
+	SOUTH,
+	NORTHEAST,
+	NORTHWEST,
+	SOUTHWEST,
+	SOUTHEAST
 };
 
 enum render_modes {

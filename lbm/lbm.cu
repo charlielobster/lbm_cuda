@@ -204,32 +204,32 @@ float accelGen(int node_num, float ux, float uy, float u2, float rho, d2q9_node*
 __device__
 void doLeftWall(int x, int y, lbm_node* after, d2q9_node* d2q9, float v, parameter_set* params)
 {
-	(after[getIndex(x, y, params)].f)[dE] = d2q9[dE].wt  * (1 + 3 * v + 3 * v * v);
-	(after[getIndex(x, y, params)].f)[dNE] = d2q9[dNE].wt * (1 + 3 * v + 3 * v * v);
-	(after[getIndex(x, y, params)].f)[dSE] = d2q9[dSE].wt * (1 + 3 * v + 3 * v * v);
+	(after[getIndex(x, y, params)].f)[EAST] = d2q9[EAST].wt  * (1 + 3 * v + 3 * v * v);
+	(after[getIndex(x, y, params)].f)[NORTHEAST] = d2q9[NORTHEAST].wt * (1 + 3 * v + 3 * v * v);
+	(after[getIndex(x, y, params)].f)[SOUTHEAST] = d2q9[SOUTHEAST].wt * (1 + 3 * v + 3 * v * v);
 }
 
 __device__
 void doRightWall(int x, int y, lbm_node* after, d2q9_node* d2q9, float v, parameter_set* params)
 {
-	(after[getIndex(x, y, params)].f)[dW] = d2q9[dW].wt  * (1 - 3 * v + 3 * v * v);
-	(after[getIndex(x, y, params)].f)[dNW] = d2q9[dNW].wt * (1 - 3 * v + 3 * v * v);
-	(after[getIndex(x, y, params)].f)[dSW] = d2q9[dSW].wt * (1 - 3 * v + 3 * v * v);
+	(after[getIndex(x, y, params)].f)[WEST] = d2q9[WEST].wt  * (1 - 3 * v + 3 * v * v);
+	(after[getIndex(x, y, params)].f)[NORTHWEST] = d2q9[NORTHWEST].wt * (1 - 3 * v + 3 * v * v);
+	(after[getIndex(x, y, params)].f)[SOUTHWEST] = d2q9[SOUTHWEST].wt * (1 - 3 * v + 3 * v * v);
 }
 
 //(top and bottom walls)
 __device__
 void doFlanks(int x, int y, lbm_node* after, d2q9_node* d2q9, float v, parameter_set* params)
 {
-	(after[getIndex(x, y, params)].f)[d0] = d2q9[d0].wt  * (1 - 1.5 * v * v);
-	(after[getIndex(x, y, params)].f)[dE] = d2q9[dE].wt  * (1 + 3 * v + 3 * v * v);
-	(after[getIndex(x, y, params)].f)[dW] = d2q9[dW].wt  * (1 - 3 * v + 3 * v * v);
-	(after[getIndex(x, y, params)].f)[dN] = d2q9[dN].wt  * (1 - 1.5 * v * v);
-	(after[getIndex(x, y, params)].f)[dS] = d2q9[dS].wt  * (1 - 1.5 * v * v);
-	(after[getIndex(x, y, params)].f)[dNE] = d2q9[dNE].wt * (1 + 3 * v + 3 * v * v);
-	(after[getIndex(x, y, params)].f)[dSE] = d2q9[dSE].wt * (1 + 3 * v + 3 * v * v);
-	(after[getIndex(x, y, params)].f)[dNW] = d2q9[dNW].wt * (1 - 3 * v + 3 * v * v);
-	(after[getIndex(x, y, params)].f)[dSW] = d2q9[dSW].wt * (1 - 3 * v + 3 * v * v);
+	(after[getIndex(x, y, params)].f)[NONE] = d2q9[NONE].wt  * (1 - 1.5 * v * v);
+	(after[getIndex(x, y, params)].f)[EAST] = d2q9[EAST].wt  * (1 + 3 * v + 3 * v * v);
+	(after[getIndex(x, y, params)].f)[WEST] = d2q9[WEST].wt  * (1 - 3 * v + 3 * v * v);
+	(after[getIndex(x, y, params)].f)[NORTH] = d2q9[NORTH].wt  * (1 - 1.5 * v * v);
+	(after[getIndex(x, y, params)].f)[SOUTH] = d2q9[SOUTH].wt  * (1 - 1.5 * v * v);
+	(after[getIndex(x, y, params)].f)[NORTHEAST] = d2q9[NORTHEAST].wt * (1 + 3 * v + 3 * v * v);
+	(after[getIndex(x, y, params)].f)[SOUTHEAST] = d2q9[SOUTHEAST].wt * (1 + 3 * v + 3 * v * v);
+	(after[getIndex(x, y, params)].f)[NORTHWEST] = d2q9[NORTHWEST].wt * (1 - 3 * v + 3 * v * v);
+	(after[getIndex(x, y, params)].f)[SOUTHWEST] = d2q9[SOUTHWEST].wt * (1 - 3 * v + 3 * v * v);
 }
 
 __device__
@@ -417,7 +417,7 @@ void freeCUDA()
 
 //render the image (but do not display it yet)
 extern "C"
-void render(int delta_t, parameter_set* params, unsigned char* barrier)
+void render(parameter_set* params, unsigned char* barrier)
 {
 	//reset image pointer
 	uchar4* d_out = 0;

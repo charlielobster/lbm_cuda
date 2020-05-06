@@ -1,4 +1,3 @@
-#include <time.h>
 #include <malloc.h>
 
 #include <helper_gl.h>
@@ -10,11 +9,6 @@
 // texture and pixel objects
 GLuint pbo = 0;     // OpenGL pixel buffer object
 GLuint tex = 0;     // OpenGL texture object
-
-//timing variables:
-unsigned long last_draw_time = 0;
-unsigned long current_draw_time = 0;
-float delta_t = 1;
 
 parameter_set params;
 
@@ -28,16 +22,15 @@ char waitingForSpeed = 0;
 char waitingForViscosity = 0;
 char waitingForRate = 0;
 int current_button = GLUT_LEFT_BUTTON; 
-float fps;
 
 extern "C" int deviceQuery();
 extern "C" void initCUDA(d2q9_node * d2q9, parameter_set * params, int W, int H,
 	lbm_node * array1, lbm_node * array2, unsigned char* barrier);
 extern "C" void initPboResource(GLuint pbo); 
-extern "C" void render(int delta_t, parameter_set* params, unsigned char* barrier);
+extern "C" void render(parameter_set* params, unsigned char* barrier);
 extern "C" void freeCUDA();
 
-void getParams(parameter_set* params)
+void initParams(parameter_set* params)
 {
 	params->needsUpdate = 1;
 	params->viscosity = 0.005;
@@ -124,15 +117,15 @@ void initArray1(d2q9_node * d2q9, float v, int W, int H)
 		for (int y = 0; y < params.height; y++)
 		{
 			i = getIndex_cpu(x, y);
-			(array1[i].f)[d0] = d2q9[d0].wt * (1 - 1.5 * v * v);
-			(array1[i].f)[dE] = d2q9[dE].wt * (1 + 3 * v + 3 * v * v);
-			(array1[i].f)[dW] = d2q9[dW].wt * (1 - 3 * v + 3 * v * v);
-			(array1[i].f)[dN] = d2q9[dN].wt * (1 - 1.5 * v * v);
-			(array1[i].f)[dS] = d2q9[dS].wt * (1 - 1.5 * v * v);
-			(array1[i].f)[dNE] = d2q9[dNE].wt * (1 + 3 * v + 3 * v * v);
-			(array1[i].f)[dSE] = d2q9[dSE].wt * (1 + 3 * v + 3 * v * v);
-			(array1[i].f)[dNW] = d2q9[dNW].wt * (1 - 3 * v + 3 * v * v);
-			(array1[i].f)[dSW] = d2q9[dSW].wt * (1 - 3 * v + 3 * v * v);
+			(array1[i].f)[NONE] = d2q9[NONE].wt * (1 - 1.5 * v * v);
+			(array1[i].f)[EAST] = d2q9[EAST].wt * (1 + 3 * v + 3 * v * v);
+			(array1[i].f)[WEST] = d2q9[WEST].wt * (1 - 3 * v + 3 * v * v);
+			(array1[i].f)[NORTH] = d2q9[NORTH].wt * (1 - 1.5 * v * v);
+			(array1[i].f)[SOUTH] = d2q9[SOUTH].wt * (1 - 1.5 * v * v);
+			(array1[i].f)[NORTHEAST] = d2q9[NORTHEAST].wt * (1 + 3 * v + 3 * v * v);
+			(array1[i].f)[SOUTHEAST] = d2q9[SOUTHEAST].wt * (1 + 3 * v + 3 * v * v);
+			(array1[i].f)[NORTHWEST] = d2q9[NORTHWEST].wt * (1 - 3 * v + 3 * v * v);
+			(array1[i].f)[SOUTHWEST] = d2q9[SOUTHWEST].wt * (1 - 3 * v + 3 * v * v);
 			array1[i].rho = 1;
 			array1[i].ux = params.v;
 			array1[i].uy = 0;
@@ -191,13 +184,7 @@ void keyboard(unsigned char a, int b, int c)
 		case'w':
 			initFluid();
 			printf("Field Reset!\n");
-			break;
-		case'a':
-			clearBarriers();
-			break;
-		case's':
-			clearBarriers();
-			break;
+			break;		
 		case'd':
 			clearBarriers();
 			drawLineDiagonal();
@@ -358,13 +345,8 @@ void mouseDrag(int x, int y)
 //gl exit callback
 void exitfunc()
 {
-	//empty all cuda resources
-	if (pbo)
-	{
-		glDeleteBuffers(1, &pbo);
-		glDeleteTextures(1, &tex);
-	}
-
+	glDeleteBuffers(1, &pbo);
+	glDeleteTextures(1, &tex);
 	freeCUDA();
 }
 
@@ -385,7 +367,7 @@ void drawTextureScaled()
 }
 
 //update the live display
-void display(int delta_t) 
+void display() 
 {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);	
@@ -393,34 +375,13 @@ void display(int delta_t)
 	//launch cuda kernels to update Lattice-Boltzmann,
 	//flip front and back LBM buffers,
 	//and update texture memory
-	render(delta_t, &params, barrier);
+	render(&params, barrier);
 
 	//redraw textures
 	drawTextureScaled();
 
 	//swap the buffers
 	glutSwapBuffers();
-}
-
-// (gl idle callback) handle frame limitting, fps calculating, and call display functions
-// triggered when glutmainloop() is idle
-void update()
-{
-	//find time since last frame update. Will replace with timers later for precision beyond 1ms
-	current_draw_time = clock();
-	delta_t = current_draw_time - last_draw_time;
-
-	//limit framerate to 5Hz
-	if (delta_t < 0)
-	{
-		return;
-	}
-
-	last_draw_time = current_draw_time;
-
-	//calculate fps
-	fps = delta_t != 0 ? 1000.0 / delta_t : 0;
-	display(delta_t);
 }
 
 void initGLUT(int* argc, char** argv) 
@@ -435,12 +396,12 @@ void initGLUT(int* argc, char** argv)
 	glutPassiveMotionFunc(mouseMove);
 	glutMouseFunc(mouseClick);
 	glutMotionFunc(mouseDrag);
-	glutDisplayFunc(update);
-	glutIdleFunc(update);
+	glutDisplayFunc(display);
+	glutIdleFunc(display);
 	glGenBuffers(1, &pbo);
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
-	glBufferData(GL_PIXEL_UNPACK_BUFFER, 4 * params.width * params.height
-		* sizeof(GLubyte), 0, GL_STREAM_DRAW);
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, 
+		4 * params.width * params.height * sizeof(GLubyte), 0, GL_STREAM_DRAW);
 	glGenTextures(1, &tex);
 	glBindTexture(GL_TEXTURE_2D, tex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -457,14 +418,10 @@ int main(int argc, char** argv)
 		return 0; //return if no cuda-capable hardware is present
 	}
 
-	getParams(&params);
-
-	//construct output window
+	initParams(&params);
 	initGLUT(&argc, argv);
-
 	initFluid();
 
-	//run gl main loop!
 	glutMainLoop();
 
 	//declare exit callback
