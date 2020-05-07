@@ -52,6 +52,6 @@ typedef struct {
 	float v;
 	unsigned char mode;
 	unsigned int stepsPerRender;
-} parameter_set;
+} parameterSet;
 
 #endif

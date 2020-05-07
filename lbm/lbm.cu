@@ -15,7 +15,7 @@ lbm_node* array1_gpu;
 lbm_node* array2_gpu;
 unsigned char* barrier_gpu;
 d2q9_node* d2q9_gpu;
-parameter_set* params_gpu;
+parameterSet* params_gpu;
 struct cudaGraphicsResource* cuda_pbo_resource;
 
 __device__
@@ -26,13 +26,13 @@ unsigned char clip(int n)
 
 //get 1d flat index from row and col
 __device__
-int getIndex(int x, int y, parameter_set* params)
+int getIndex(int x, int y, parameterSet* params)
 {
 	return y * params->width + x;
 }
 
 __device__
-uchar4 getRgbRho(float i, parameter_set* params)
+uchar4 getRgbRho(float i, parameterSet* params)
 {
 	uchar4 val;
 	if (i == i)
@@ -87,7 +87,7 @@ uchar4 getRgbU(float i)
 }
 
 __device__
-float computeCurlMiddleCase(int x, int y, lbm_node * array1, parameter_set* params) 
+float computeCurlMiddleCase(int x, int y, lbm_node * array1, parameterSet* params) 
 {
 	return (array1[getIndex(x, y + 1, params)].ux
 		- array1[getIndex(x, y - 1, params)].ux)
@@ -96,7 +96,7 @@ float computeCurlMiddleCase(int x, int y, lbm_node * array1, parameter_set* para
 }
 
 __device__
-uchar4 getRgbCurl(int x, int y, lbm_node* array, parameter_set* params)
+uchar4 getRgbCurl(int x, int y, lbm_node* array, parameterSet* params)
 {
 	uchar4 val;
 	val.x = 0;
@@ -127,10 +127,9 @@ uchar4 getRgbCurl(int x, int y, lbm_node* array, parameter_set* params)
 }
 
 __device__
-void computeColor(lbm_node* array, int x, int y, parameter_set* params, uchar4* image, unsigned char* barrier)
+void computeColor(lbm_node* array, int x, int y, parameterSet* params, uchar4* image, unsigned char* barrier)
 {
 	int i = getIndex(x, y, params);
-	int prei = getIndex(params->prex, params->prey, params);
 
 	if (barrier[i] == 1)
 	{
@@ -159,18 +158,11 @@ void computeColor(lbm_node* array, int x, int y, parameter_set* params, uchar4* 
 			image[i] = getRgbU(array[i].uy);
 			break;
 		}
-	}
-	if (i == prei)
-	{
-		image[i].x = 255;
-		image[i].y = 0;
-		image[i].z = 0;
-		image[i].w = 255;
-	}
+	}	
 }
 
 __device__
-void macroGen(float* f, float* ux, float* uy, float* rho, int i, parameter_set* params)
+void macroGen(float* f, float* ux, float* uy, float* rho, int i, parameterSet* params)
 {
 	const float top_row = f[6] + f[2] + f[5];
 	const float mid_row = f[3] + f[0] + f[1];
@@ -202,7 +194,7 @@ float accelGen(int node_num, float ux, float uy, float u2, float rho, d2q9_node*
 }
 
 __device__
-void doLeftWall(int x, int y, lbm_node* after, d2q9_node* d2q9, float v, parameter_set* params)
+void doLeftWall(int x, int y, lbm_node* after, d2q9_node* d2q9, float v, parameterSet* params)
 {
 	(after[getIndex(x, y, params)].f)[EAST] = d2q9[EAST].wt  * (1 + 3 * v + 3 * v * v);
 	(after[getIndex(x, y, params)].f)[NORTHEAST] = d2q9[NORTHEAST].wt * (1 + 3 * v + 3 * v * v);
@@ -210,7 +202,7 @@ void doLeftWall(int x, int y, lbm_node* after, d2q9_node* d2q9, float v, paramet
 }
 
 __device__
-void doRightWall(int x, int y, lbm_node* after, d2q9_node* d2q9, float v, parameter_set* params)
+void doRightWall(int x, int y, lbm_node* after, d2q9_node* d2q9, float v, parameterSet* params)
 {
 	(after[getIndex(x, y, params)].f)[WEST] = d2q9[WEST].wt  * (1 - 3 * v + 3 * v * v);
 	(after[getIndex(x, y, params)].f)[NORTHWEST] = d2q9[NORTHWEST].wt * (1 - 3 * v + 3 * v * v);
@@ -219,7 +211,7 @@ void doRightWall(int x, int y, lbm_node* after, d2q9_node* d2q9, float v, parame
 
 //(top and bottom walls)
 __device__
-void doFlanks(int x, int y, lbm_node* after, d2q9_node* d2q9, float v, parameter_set* params)
+void doFlanks(int x, int y, lbm_node* after, d2q9_node* d2q9, float v, parameterSet* params)
 {
 	(after[getIndex(x, y, params)].f)[NONE] = d2q9[NONE].wt  * (1 - 1.5 * v * v);
 	(after[getIndex(x, y, params)].f)[EAST] = d2q9[EAST].wt  * (1 + 3 * v + 3 * v * v);
@@ -234,7 +226,7 @@ void doFlanks(int x, int y, lbm_node* after, d2q9_node* d2q9, float v, parameter
 
 __device__
 void streamEdgeCases(int x, int y, lbm_node* after, unsigned char* barrier,
-	parameter_set* params, d2q9_node* d2q9)
+	parameterSet* params, d2q9_node* d2q9)
 {
 
 	if (x == 0)
@@ -261,7 +253,7 @@ void streamEdgeCases(int x, int y, lbm_node* after, unsigned char* barrier,
 }
 
 __global__
-void collide(d2q9_node* d2q9, lbm_node* before, lbm_node* after, parameter_set* params, unsigned char* barrier)
+void collide(d2q9_node* d2q9, lbm_node* before, lbm_node* after, parameterSet* params, unsigned char* barrier)
 {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -289,7 +281,7 @@ void collide(d2q9_node* d2q9, lbm_node* before, lbm_node* after, parameter_set* 
 //stream: handle particle propagation, ignoring edge cases.
 __global__
 void stream(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
-	unsigned char* barrier, parameter_set* params)
+	unsigned char* barrier, parameterSet* params)
 {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -323,7 +315,7 @@ void stream(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
 
 __global__
 void bounceAndRender(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
-	unsigned char* barrier, parameter_set* params, uchar4* image)
+	unsigned char* barrier, parameterSet* params, uchar4* image)
 {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -386,11 +378,11 @@ void initPboResource(GLuint pbo)
 }
 
 extern "C" 
-void initCUDA(d2q9_node * d2q9, parameter_set *params, int W, int H, 
+void initCUDA(d2q9_node * d2q9, parameterSet *params, int W, int H, 
 	lbm_node* array1, lbm_node* array2, unsigned char* barrier)
 {
 	ierrSync = cudaMalloc(&d2q9_gpu, 9 * sizeof(d2q9_node));
-	ierrSync = cudaMalloc(&params_gpu, sizeof(parameter_set));
+	ierrSync = cudaMalloc(&params_gpu, sizeof(parameterSet));
 	ierrSync = cudaMalloc(&barrier_gpu, sizeof(unsigned char) * W * H);
 	ierrSync = cudaMalloc(&array1_gpu, sizeof(lbm_node) * W * H);
 	ierrSync = cudaMalloc(&array2_gpu, sizeof(lbm_node) * W * H);
@@ -417,7 +409,7 @@ void freeCUDA()
 
 //render the image (but do not display it yet)
 extern "C"
-void render(parameter_set* params, unsigned char* barrier)
+void render(parameterSet* params, unsigned char* barrier)
 {
 	//reset image pointer
 	uchar4* d_out = 0;

@@ -10,7 +10,12 @@
 GLuint pbo = 0;     // OpenGL pixel buffer object
 GLuint tex = 0;     // OpenGL texture object
 
-parameter_set params;
+float rotate_x = 0.0, rotate_y = 0.0;
+float translate_z = -3.0;
+int mouse_old_x, mouse_old_y;
+int mouse_buttons = 0;
+
+parameterSet params;
 
 //GPU/CPU interop memory pointers:
 unsigned char state = 0;
@@ -24,21 +29,21 @@ char waitingForRate = 0;
 int current_button = GLUT_LEFT_BUTTON; 
 
 extern "C" int deviceQuery();
-extern "C" void initCUDA(d2q9_node * d2q9, parameter_set * params, int W, int H,
+extern "C" void initCUDA(d2q9_node * d2q9, parameterSet * params, int W, int H,
 	lbm_node * array1, lbm_node * array2, unsigned char* barrier);
 extern "C" void initPboResource(GLuint pbo); 
-extern "C" void render(parameter_set* params, unsigned char* barrier);
+extern "C" void render(parameterSet* params, unsigned char* barrier);
 extern "C" void freeCUDA();
 
-void initParams(parameter_set* params)
+void initParams(parameterSet* params)
 {
 	params->needsUpdate = 1;
 	params->viscosity = 0.005;
 	params->contrast = 75;
 	params->v = 0.1;
 	params->mode = CURL;
-	params->height = 256;
-	params->width = 512;
+	params->height = 128;
+	params->width = 256;
 	params->stepsPerRender = 10;
 	params->prex = -1;
 	params->prey = -1;
@@ -94,18 +99,6 @@ void initD2q9(d2q9_node* d2q9)
 	d2q9[6].ex = -1;	d2q9[6].ey = 1;		d2q9[6].wt = 1.0 / 36.0;	d2q9[6].op = 8;
 	d2q9[7].ex = -1;	d2q9[7].ey = -1;	d2q9[7].wt = 1.0 / 36.0;	d2q9[7].op = 5;
 	d2q9[8].ex = 1;		d2q9[8].ey = -1;	d2q9[8].wt = 1.0 / 36.0;	d2q9[8].op = 6;
-}
-
-void zeroSite(lbm_node* array, int index)
-{
-	int dir = 0;
-	for (dir = 0; dir < 9; dir += 1)
-	{
-		(array[index].f)[dir] = 0;
-	}
-	array[index].rho = 1;
-	array[index].ux = 0;
-	array[index].uy = 0;
 }
 
 void initArray1(d2q9_node * d2q9, float v, int W, int H)
@@ -366,22 +359,87 @@ void drawTextureScaled()
 	glDisable(GL_TEXTURE_2D);
 }
 
+
+void mouse(int button, int state, int x, int y)
+{
+	if (state == GLUT_DOWN)
+	{
+		mouse_buttons |= 1 << button;
+	}
+	else if (state == GLUT_UP)
+	{
+		mouse_buttons = 0;
+	}
+
+	mouse_old_x = x;
+	mouse_old_y = y;
+	glutPostRedisplay();
+}
+
+void motion(int x, int y)
+{
+	float dx, dy;
+	dx = (float)(x - mouse_old_x);
+	dy = (float)(y - mouse_old_y);
+
+	if (mouse_buttons & 1)
+	{
+		rotate_x += dy * 0.2f;
+		rotate_y += dx * 0.2f;
+	}
+	else if (mouse_buttons & 4)
+	{
+		translate_z += dy * 0.01f;
+	}
+
+	mouse_old_x = x;
+	mouse_old_y = y;
+	glutPostRedisplay();
+}
+
 //update the live display
 void display() 
 {
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);	
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//launch cuda kernels to update Lattice-Boltzmann,
-	//flip front and back LBM buffers,
-	//and update texture memory
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glTranslatef(0.0, 0.0, translate_z);
+	glRotatef(rotate_x, 1.0, 0.0, 0.0);
+	glRotatef(rotate_y, 0.0, 1.0, 0.0);
+
+	glEnable(GL_TEXTURE_2D);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+	glBindTexture(GL_TEXTURE_2D, tex);
+
 	render(&params, barrier);
 
-	//redraw textures
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0, 0.0); glVertex3f(-2.0, -0.5, 0.0);
+	glTexCoord2f(0.0, 1.0); glVertex3f(-2.0, 0.5, 0.0);
+	glTexCoord2f(1.0, 1.0); glVertex3f(0.0, 0.5, 0.0);
+	glTexCoord2f(1.0, 0.0); glVertex3f(0.0, -0.5, 0.0);
+	glEnd();
+
+	glFlush();
+	glDisable(GL_TEXTURE_2D);
+
+	// redraw textures
 	drawTextureScaled();
 
-	//swap the buffers
+	// swap the buffers
 	glutSwapBuffers();
+}
+
+void reshape(int w, int h)
+{
+	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(60.0, (GLfloat)w / (GLfloat)h, 1.0, 30.0);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glTranslatef(0.0, 0.0, -4.0);
 }
 
 void initGLUT(int* argc, char** argv) 
@@ -389,14 +447,15 @@ void initGLUT(int* argc, char** argv)
 	glutInit(argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 	glutInitWindowSize(params.width, params.height);
-	glutCreateWindow("LBM GPU");
+	glutCreateWindow("lbm");
 	glewInit();
 	gluOrtho2D(0, params.width, params.height, 0);
 	glutKeyboardFunc(keyboard);
 	glutPassiveMotionFunc(mouseMove);
-	glutMouseFunc(mouseClick);
-	glutMotionFunc(mouseDrag);
+	glutMouseFunc(mouse);
+	glutMotionFunc(motion);
 	glutDisplayFunc(display);
+	glutReshapeFunc(reshape);
 	glutIdleFunc(display);
 	glGenBuffers(1, &pbo);
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
