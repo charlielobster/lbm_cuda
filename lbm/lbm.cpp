@@ -11,8 +11,8 @@ GLuint pbo = 0;     // OpenGL pixel buffer object
 GLuint tex = 0;     // OpenGL texture object
 
 float rotate_x = 0.0, rotate_y = 0.0;
-float translate_z = -3.0;
-int mouse_old_x, mouse_old_y;
+float translate_z = -2.0;
+int previous_mouse_x, previous_mouse_y;
 int mouse_buttons = 0;
 
 parameterSet params;
@@ -262,79 +262,6 @@ void keyboard(unsigned char a, int b, int c)
 	params.needsUpdate = 1;
 }
 
-void mouseClick(int button, int state, int x, int y)
-{
-	if (state == GLUT_DOWN)
-	{
-		if (button == GLUT_LEFT_BUTTON)
-		{
-			current_button = GLUT_LEFT_BUTTON;
-			int lx, ly; // lattice coordinates
-			lx = x * params.width / glutGet(GLUT_WINDOW_WIDTH);
-			ly = y * params.height / glutGet(GLUT_WINDOW_HEIGHT);
-
-			if (lx >= params.width || ly >= params.height)
-				return;
-
-			barrier[getIndex_cpu(lx, ly)] = 1;
-			params.needsUpdate = 1;
-		}
-		else if (button == GLUT_RIGHT_BUTTON)
-		{
-			current_button = GLUT_RIGHT_BUTTON;
-			int lx, ly; // lattice coordinates
-			lx = x * params.width / glutGet(GLUT_WINDOW_WIDTH);
-			ly = y * params.height / glutGet(GLUT_WINDOW_HEIGHT);
-
-			if (lx >= params.width || ly >= params.height)
-				return;
-
-			barrier[getIndex_cpu(lx, ly)] = 0;
-			params.needsUpdate = 1;
-		}
-	}
-}
-
-//mouse move callback
-void mouseMove(int x, int y)
-{
-
-	int lx, ly; // lattice coordinates
-	lx = x * params.width / glutGet(GLUT_WINDOW_WIDTH);
-	ly = y * params.height / glutGet(GLUT_WINDOW_HEIGHT);
-
-	if (lx >= params.width || ly >= params.height)
-		return;
-
-	params.prex = lx;
-	params.prey = ly;
-}
-
-//mouse drag callback
-void mouseDrag(int x, int y)
-{
-	int lx, ly; // lattice coordinates
-	lx = x * params.width / glutGet(GLUT_WINDOW_WIDTH);
-	ly = y * params.height / glutGet(GLUT_WINDOW_HEIGHT);
-
-	if (lx >= params.width || ly >= params.height)
-		return;
-
-	params.prex = lx;
-	params.prey = ly;
-
-	if (current_button == GLUT_LEFT_BUTTON)
-	{
-		barrier[getIndex_cpu(lx, ly)] = 1;
-	}
-	else if (current_button == GLUT_RIGHT_BUTTON)
-	{
-		barrier[getIndex_cpu(lx, ly)] = 0;
-	}
-
-	params.needsUpdate = 1;
-}
-
 //gl exit callback
 void exitfunc()
 {
@@ -342,23 +269,6 @@ void exitfunc()
 	glDeleteTextures(1, &tex);
 	freeCUDA();
 }
-
-//update textures to reflect texture memory
-void drawTextureScaled() 
-{
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, params.width, params.height,
-		0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-	glEnable(GL_TEXTURE_2D);
-	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, 0.0f); glVertex2f(0, 0);
-	glTexCoord2f(0.0f, 1.0f); glVertex2f(0, params.height);
-	glTexCoord2f(1.0f, 1.0f); glVertex2f(params.width, params.height);
-	glTexCoord2f(1.0f, 0.0f); glVertex2f(params.width, 0);
-	glEnd();
-	glDisable(GL_TEXTURE_2D);
-}
-
 
 void mouse(int button, int state, int x, int y)
 {
@@ -371,16 +281,16 @@ void mouse(int button, int state, int x, int y)
 		mouse_buttons = 0;
 	}
 
-	mouse_old_x = x;
-	mouse_old_y = y;
+	previous_mouse_x = x;
+	previous_mouse_y = y;
 	glutPostRedisplay();
 }
 
 void motion(int x, int y)
 {
 	float dx, dy;
-	dx = (float)(x - mouse_old_x);
-	dy = (float)(y - mouse_old_y);
+	dx = (float)(x - previous_mouse_x);
+	dy = (float)(y - previous_mouse_y);
 
 	if (mouse_buttons & 1)
 	{
@@ -392,8 +302,8 @@ void motion(int x, int y)
 		translate_z += dy * 0.01f;
 	}
 
-	mouse_old_x = x;
-	mouse_old_y = y;
+	previous_mouse_x = x;
+	previous_mouse_y = y;
 	glutPostRedisplay();
 }
 
@@ -408,26 +318,24 @@ void display()
 	glRotatef(rotate_x, 1.0, 0.0, 0.0);
 	glRotatef(rotate_y, 0.0, 1.0, 0.0);
 
+	render(&params, barrier);
+
 	glEnable(GL_TEXTURE_2D);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 	glBindTexture(GL_TEXTURE_2D, tex);
-
-	render(&params, barrier);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
+		params.width, params.height, 0, 
+		GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
 	glBegin(GL_QUADS);
-	glTexCoord2f(0.0, 0.0); glVertex3f(-2.0, -0.5, 0.0);
-	glTexCoord2f(0.0, 1.0); glVertex3f(-2.0, 0.5, 0.0);
-	glTexCoord2f(1.0, 1.0); glVertex3f(0.0, 0.5, 0.0);
-	glTexCoord2f(1.0, 0.0); glVertex3f(0.0, -0.5, 0.0);
+	glTexCoord2f(0.0, 0.0); glVertex3f(-1.0, -0.5, 0.0);
+	glTexCoord2f(0.0, 1.0); glVertex3f(-1.0, 0.5, 0.0);
+	glTexCoord2f(1.0, 1.0); glVertex3f(1.0, 0.5, 0.0);
+	glTexCoord2f(1.0, 0.0); glVertex3f(1.0, -0.5, 0.0);
 	glEnd();
 
-	glFlush();
 	glDisable(GL_TEXTURE_2D);
 
-	// redraw textures
-	drawTextureScaled();
-
-	// swap the buffers
 	glutSwapBuffers();
 }
 
@@ -439,7 +347,6 @@ void reshape(int w, int h)
 	gluPerspective(60.0, (GLfloat)w / (GLfloat)h, 1.0, 30.0);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0.0, 0.0, -4.0);
 }
 
 void initGLUT(int* argc, char** argv) 
@@ -451,7 +358,6 @@ void initGLUT(int* argc, char** argv)
 	glewInit();
 	gluOrtho2D(0, params.width, params.height, 0);
 	glutKeyboardFunc(keyboard);
-	glutPassiveMotionFunc(mouseMove);
 	glutMouseFunc(mouse);
 	glutMotionFunc(motion);
 	glutDisplayFunc(display);

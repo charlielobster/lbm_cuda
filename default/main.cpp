@@ -57,7 +57,7 @@ static GLuint texName;
 
 float rotate_x = 0.0, rotate_y = 0.0;
 float translate_z = -3.0;
-int mouse_old_x, mouse_old_y;
+int previous_mouse_x, previous_mouse_y;
 int mouse_buttons = 0;
 
 void makeCheckImage(void)
@@ -86,16 +86,16 @@ void mouse(int button, int state, int x, int y)
         mouse_buttons = 0;
     }
 
-    mouse_old_x = x;
-    mouse_old_y = y;
+    previous_mouse_x = x;
+    previous_mouse_y = y;
     glutPostRedisplay();
 }
 
 void motion(int x, int y)
 {
     float dx, dy;
-    dx = (float)(x - mouse_old_x);
-    dy = (float)(y - mouse_old_y);
+    dx = (float)(x - previous_mouse_x);
+    dy = (float)(y - previous_mouse_y);
 
     if (mouse_buttons & 1)
     {
@@ -107,8 +107,8 @@ void motion(int x, int y)
         translate_z += dy * 0.01f;
     }
 
-    mouse_old_x = x;
-    mouse_old_y = y;
+    previous_mouse_x = x;
+    previous_mouse_y = y;
     glutPostRedisplay();
 }
 
