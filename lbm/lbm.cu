@@ -311,9 +311,9 @@ void printDeviceInfo()
 		printf("Device name: %s\n", prop.name);
 		printf("Compute capability: %d.%d\n", prop.major, prop.minor);
 		printf("Max threads per block: %d\n", prop.maxThreadsPerBlock);
-		printf("Max threads in X-LATTICE_DIMENSION of block: %d\n", prop.maxThreadsDim[0]);
-		printf("Max threads in Y-LATTICE_DIMENSION of block: %d\n", prop.maxThreadsDim[1]);
-		printf("Max threads in Z-LATTICE_DIMENSION of block: %d\n\n", prop.maxThreadsDim[2]);
+		printf("Max threads in X-dimension of block: %d\n", prop.maxThreadsDim[0]);
+		printf("Max threads in Y-dimension of block: %d\n", prop.maxThreadsDim[1]);
+		printf("Max threads in Z-dimension of block: %d\n\n", prop.maxThreadsDim[2]);
 		if (ierr != cudaSuccess) { printf("error: %s\n", cudaGetErrorString(ierr)); }
 	}
 }
