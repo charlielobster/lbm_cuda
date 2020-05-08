@@ -8,9 +8,6 @@
 
 #include "lbm.cuh"
 
-cudaError_t ierrAsync;
-cudaError_t ierrSync;
-
 lbm_node* array1_gpu;
 lbm_node* array2_gpu;
 unsigned char* barrier_gpu;
@@ -80,39 +77,6 @@ uchar4 getRgbCurl(int x, int y, lbm_node* array)
 }
 
 __device__
-void computeColor(renderMode mode, lbm_node* array, int x, int y, 
-	uchar4* image, unsigned char* barrier)
-{
-	int i = INDEX(x, y);
-
-	if (barrier[i] == 1)
-	{
-		image[i].w = 255;
-		image[i].x = 255;
-		image[i].y = 255;
-		image[i].z = 255;
-	}
-	else
-	{
-		switch (mode)
-		{
-		case(CURL):
-			image[i] = getRgbCurl(x, y, array);
-			break;
-		case(SPEED):
-			image[i] = getRgbU(sqrt(array[i].ux * array[i].ux + array[i].uy * array[i].uy));
-			break;
-		case(UX):
-			image[i] = getRgbU(array[i].ux);
-			break;
-		case(UY):
-			image[i] = getRgbU(array[i].uy);
-			break;
-		}
-	}	
-}
-
-__device__
 void macroGen(float* f, float* ux, float* uy, float* rho, int i)
 {
 	const float top_row = f[6] + f[2] + f[5];
@@ -164,7 +128,7 @@ void doRightWall(int x, int y, lbm_node* after, d2q9_node* d2q9)
 __device__
 void doFlanks(int x, int y, lbm_node* after, d2q9_node* d2q9)
 {
-	(after[INDEX(x, y)].f)[NONE] = d2q9[NONE].wt  * (1 - 1.5 * VELOCITY_SQUARED);
+	after[INDEX(x, y)].f[NONE] = d2q9[NONE].wt  * (1 - 1.5 * VELOCITY_SQUARED);
 	(after[INDEX(x, y)].f)[EAST] = d2q9[EAST].wt  * (1 + 3 * VELOCITY + 3 * VELOCITY_SQUARED);
 	(after[INDEX(x, y)].f)[WEST] = d2q9[WEST].wt  * (1 - 3 * VELOCITY + 3 * VELOCITY_SQUARED);
 	(after[INDEX(x, y)].f)[NORTH] = d2q9[NORTH].wt  * (1 - 1.5 * VELOCITY_SQUARED);
@@ -262,17 +226,12 @@ void stream(d2q9_node* d2q9, lbm_node* before, lbm_node* after, unsigned char* b
 }
 
 __global__
-void bounceAndColor(renderMode mode, d2q9_node* d2q9, 
-	lbm_node* before, lbm_node* after,
+void bounce(d2q9_node* d2q9, lbm_node* before, lbm_node* after, 
 	unsigned char* barrier, uchar4* image)
 {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int i = INDEX(x, y);
-
-	//toss out out of bounds and edge cases
-	if (x < 0 || x >= LATTICE_WIDTH || y < 0 || y >= LATTICE_HEIGHT)
-		return;
 
 	if (x > 0 && x < LATTICE_WIDTH - 1 && y > 0 && y < LATTICE_HEIGHT - 1)
 	{
@@ -289,22 +248,55 @@ void bounceAndColor(renderMode mode, d2q9_node* d2q9,
 			}
 		}
 	}
+}
 
-	computeColor(mode, after, x, y, image, barrier);
+__global__
+void color(renderMode mode, lbm_node* array, uchar4* image, unsigned char* barrier)
+{
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+	// toss out out of bounds and edge cases
+	if (x < 0 || x >= LATTICE_WIDTH || y < 0 || y >= LATTICE_HEIGHT)
+		return;
+
+	int i = INDEX(x, y);
+
+	if (barrier[i] == 1)
+	{
+		image[i].w = 255;
+		image[i].x = 255;
+		image[i].y = 255;
+		image[i].z = 255;
+	}
+	else
+	{
+		switch (mode)
+		{
+		case(CURL):
+			image[i] = getRgbCurl(x, y, array);
+			break;
+		case(SPEED):
+			image[i] = getRgbU(sqrt(array[i].ux * array[i].ux + array[i].uy * array[i].uy));
+			break;
+		case(UX):
+			image[i] = getRgbU(array[i].ux);
+			break;
+		case(UY):
+			image[i] = getRgbU(array[i].uy);
+			break;
+		}
+	}
 }
 
 //display stats of all detected cuda capable devices, and return the number
 extern "C"
 void printDeviceInfo()
 {
+	int nDevices = 0;
+	cudaError_t ierr = cudaGetDeviceCount(&nDevices);
 	cudaDeviceProp prop;
-	int nDevices = 1;
-	cudaError_t ierr;
-
-	ierr = cudaGetDeviceCount(&nDevices);
-
-	int i = 0;
-	for (i = 0; i < nDevices; ++i)
+	for (int i = 0; i < nDevices; ++i)
 	{
 		ierr = cudaGetDeviceProperties(&prop, i);
 		printf("Device number: %d\n", i);
@@ -327,7 +319,7 @@ void initPboResource(GLuint pbo)
 extern "C" 
 void initCUDA(d2q9_node * d2q9, lbm_node* array1, lbm_node* array2, unsigned char* barrier)
 {
-	ierrSync = cudaMalloc(&d2q9_gpu, 9 * sizeof(d2q9_node));
+	cudaError_t ierrSync = cudaMalloc(&d2q9_gpu, 9 * sizeof(d2q9_node));
 	ierrSync = cudaMalloc(&barrier_gpu, sizeof(unsigned char) * LATTICE_DIMENSION);
 	ierrSync = cudaMalloc(&array1_gpu, sizeof(lbm_node) * LATTICE_DIMENSION);
 	ierrSync = cudaMalloc(&array2_gpu, sizeof(lbm_node) * LATTICE_DIMENSION);
@@ -352,7 +344,7 @@ void freeCUDA()
 
 //render the image (but do not display it yet)
 extern "C"
-void launchKernels(bool barriersUpdated, renderMode mode, unsigned char* barrier)
+void launchKernels(renderMode mode, bool barriersUpdated, unsigned char* barrier)
 {
 	//reset image pointer
 	uchar4* d_out = 0;
@@ -379,8 +371,8 @@ void launchKernels(bool barriersUpdated, renderMode mode, unsigned char* barrier
 
 		collide<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, before, after, barrier_gpu);
 
-		ierrSync = cudaGetLastError();
-		ierrAsync = cudaDeviceSynchronize();
+		cudaError_t ierrSync = cudaGetLastError();
+		cudaError_t ierrAsync = cudaDeviceSynchronize();
 
 		before = array2_gpu;
 		after = array1_gpu;
@@ -390,10 +382,15 @@ void launchKernels(bool barriersUpdated, renderMode mode, unsigned char* barrier
 		ierrSync = cudaGetLastError();
 		ierrAsync = cudaDeviceSynchronize();
 
-		bounceAndColor<<<number_of_blocks, threads_per_block>>>(mode, d2q9_gpu, before, after, barrier_gpu, d_out);
+		bounce<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, before, after, barrier_gpu, d_out);
 
 		ierrSync = cudaGetLastError();
 		ierrAsync = cudaDeviceSynchronize();	
+
+		color<<<number_of_blocks, threads_per_block>>>(mode, after, d_out, barrier_gpu);
+
+		ierrSync = cudaGetLastError();
+		ierrAsync = cudaDeviceSynchronize();
 	}
 
 	//unmap the resources for next time

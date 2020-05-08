@@ -33,18 +33,18 @@ enum renderMode {
 };
 
 typedef struct {
-	//velocities:
-	float ux;	//x velocity
-	float uy;	//y velocity
-	float rho;	//density. aka rho
+	// velocities:
+	float ux;	// x velocity
+	float uy;	// y velocity
+	float rho;	// density. aka rho
 	float f[9];
 } lbm_node;
 
 typedef struct {
-	char ex; //x location
-	char ey; //y location
-	float wt; //weight
-	unsigned char op; //opposite char
+	char ex; // x location
+	char ey; // y location
+	float wt; // weight
+	unsigned char op; // opposite char
 } d2q9_node;
 
 #endif

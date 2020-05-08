@@ -29,7 +29,7 @@ int current_button = GLUT_LEFT_BUTTON;
 extern "C" void printDeviceInfo();
 extern "C" void initCUDA(d2q9_node * d2q9, lbm_node * array1, lbm_node * array2, unsigned char* barrier);
 extern "C" void initPboResource(GLuint pbo); 
-extern "C" void launchKernels(bool barrierUpdated, renderMode mode, unsigned char* barrier);
+extern "C" void launchKernels(renderMode mode, bool barrierUpdated, unsigned char* barrier);
 extern "C" void freeCUDA();
 
 void clearBarriers()
@@ -214,7 +214,7 @@ void display()
 	glRotatef(rotate_x, 1.0, 0.0, 0.0);
 	glRotatef(rotate_y, 0.0, 1.0, 0.0);
 
-	launchKernels(barriersUpdated, mode, barrier);
+	launchKernels(mode, barriersUpdated, barrier);
 	barriersUpdated = false;
 
 	glEnable(GL_TEXTURE_2D);
