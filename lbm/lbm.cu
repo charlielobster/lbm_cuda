@@ -262,7 +262,7 @@ void stream(d2q9_node* d2q9, lbm_node* before, lbm_node* after, unsigned char* b
 }
 
 __global__
-void bounceAndRender(renderMode mode, d2q9_node* d2q9, 
+void bounceAndColor(renderMode mode, d2q9_node* d2q9, 
 	lbm_node* before, lbm_node* after,
 	unsigned char* barrier, uchar4* image)
 {
@@ -390,7 +390,7 @@ void launchKernels(bool barriersUpdated, renderMode mode, unsigned char* barrier
 		ierrSync = cudaGetLastError();
 		ierrAsync = cudaDeviceSynchronize();
 
-		bounceAndRender<<<number_of_blocks, threads_per_block>>>(mode, d2q9_gpu, before, after, barrier_gpu, d_out);
+		bounceAndColor<<<number_of_blocks, threads_per_block>>>(mode, d2q9_gpu, before, after, barrier_gpu, d_out);
 
 		ierrSync = cudaGetLastError();
 		ierrAsync = cudaDeviceSynchronize();	
