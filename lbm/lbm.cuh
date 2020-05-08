@@ -1,8 +1,17 @@
-#ifndef _LBM_H_
-#define _LBM_H_
+#ifndef _LBM_CUH_
+#define _LBM_CUH_
 
-#define trace_x 50
-#define trace_y 57
+#define VISCOSITY 0.005
+#define CONTRAST 75
+#define VELOCITY 0.1
+#define VELOCITY_SQUARED 0.01
+#define STEPS_PER_RENDER 10
+#define LATTICE_WIDTH 256
+#define LATTICE_HEIGHT 128
+//#define LATTICE_DEPTH 64
+#define LATTICE_DIMENSION 32768
+#define INDEX(x, y) ((x) + (y) * LATTICE_WIDTH)
+#define CLIP(n) ((n) > 255 ? 255 : ((n) < 0 ? 0 : (n)))
 
 enum direction {
 	NONE = 0,
@@ -17,7 +26,6 @@ enum direction {
 };
 
 enum renderMode {
-	RHO,
 	CURL,
 	SPEED,
 	UX,
@@ -32,26 +40,11 @@ typedef struct {
 	float f[9];
 } lbm_node;
 
-
 typedef struct {
 	char ex; //x location
 	char ey; //y location
 	float wt; //weight
 	unsigned char op; //opposite char
 } d2q9_node;
-
-typedef struct {
-	int needsUpdate;
-	int prex;
-	int prey;
-	float viscosity;
-	float omega;
-	unsigned int height;
-	unsigned int width;
-	float contrast;
-	float v;
-	unsigned char mode;
-	unsigned int stepsPerRender;
-} parameterSet;
 
 #endif

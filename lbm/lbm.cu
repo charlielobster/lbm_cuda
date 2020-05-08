@@ -15,54 +15,7 @@ lbm_node* array1_gpu;
 lbm_node* array2_gpu;
 unsigned char* barrier_gpu;
 d2q9_node* d2q9_gpu;
-parameterSet* params_gpu;
 struct cudaGraphicsResource* cuda_pbo_resource;
-
-__device__
-unsigned char clip(int n) 
-{
-	return n > 255 ? 255 : (n < 0 ? 0 : n);
-}
-
-//get 1d flat index from row and col
-__device__
-int getIndex(int x, int y, parameterSet* params)
-{
-	return y * params->width + x;
-}
-
-__device__
-uchar4 getRgbRho(float i, parameterSet* params)
-{
-	uchar4 val;
-	if (i == i)
-	{
-		int j = (1 - i) * 255 * 10; // approximately -255 to 255;
-
-		val.x = 0;
-		val.w = 0;
-		val.z = 255;
-
-		if (j > 0)
-		{
-			val.y = clip(j);
-			val.z = 0;
-		}
-		else
-		{
-			val.z = clip(-j);
-			val.y = 0;
-		}
-	}
-	else
-	{
-		val.y = 0;
-		val.x = 255;
-		val.w = 0;
-		val.z = 255;
-	}
-	return val;
-}
 
 __device__
 uchar4 getRgbU(float i)
@@ -73,7 +26,7 @@ uchar4 getRgbU(float i)
 	{
 		val.w = 255;
 		val.x = 0;
-		val.y = clip(i*255.0 / 1.0);
+		val.y = CLIP(i*255.0 / 1.0);
 		val.z = 0;
 	}
 	else
@@ -87,36 +40,36 @@ uchar4 getRgbU(float i)
 }
 
 __device__
-float computeCurlMiddleCase(int x, int y, lbm_node * array1, parameterSet* params) 
+float computeCurlMiddleCase(int x, int y, lbm_node * array1) 
 {
-	return (array1[getIndex(x, y + 1, params)].ux
-		- array1[getIndex(x, y - 1, params)].ux)
-		- (array1[getIndex(x + 1, y, params)].uy
-			- array1[getIndex(x - 1, y, params)].uy);
+	return (array1[INDEX(x, y + 1)].ux - array1[INDEX(x, y - 1)].ux)
+		- (array1[INDEX(x + 1, y)].uy - array1[INDEX(x - 1, y)].uy);
 }
 
 __device__
-uchar4 getRgbCurl(int x, int y, lbm_node* array, parameterSet* params)
+uchar4 getRgbCurl(int x, int y, lbm_node* array)
 {
 	uchar4 val;
 	val.x = 0;
 	val.w = 255;
-	if (0 < x && x < params->width - 1) {
-		if (0 < y && y < params->height - 1) {
-			if (computeCurlMiddleCase(x, y, array, params) > 0)
+	if (0 < x && x < LATTICE_WIDTH - 1) 
+	{
+		if (0 < y && y < LATTICE_HEIGHT - 1) 
+		{
+			if (computeCurlMiddleCase(x, y, array) > 0)
 			{
-				val.y = clip(20 * params->contrast * computeCurlMiddleCase(x, y, array, params));
+				val.y = CLIP(20 * CONTRAST * computeCurlMiddleCase(x, y, array));
 				val.z = 0;
 			}
 			else
 			{
-				val.z = clip(20 * params->contrast * -1 * computeCurlMiddleCase(x, y, array, params));
+				val.z = CLIP(20 * CONTRAST * -1 * computeCurlMiddleCase(x, y, array));
 				val.y = 0;
 			}
 		}
 	}
 
-	if (array[getIndex(x, y, params)].rho != array[getIndex(x, y, params)].rho)
+	if (array[INDEX(x, y)].rho != array[INDEX(x, y)].rho)
 	{
 		val.x = 255;
 		val.y = 0;
@@ -127,9 +80,10 @@ uchar4 getRgbCurl(int x, int y, lbm_node* array, parameterSet* params)
 }
 
 __device__
-void computeColor(lbm_node* array, int x, int y, parameterSet* params, uchar4* image, unsigned char* barrier)
+void computeColor(renderMode mode, lbm_node* array, int x, int y, 
+	uchar4* image, unsigned char* barrier)
 {
-	int i = getIndex(x, y, params);
+	int i = INDEX(x, y);
 
 	if (barrier[i] == 1)
 	{
@@ -140,13 +94,10 @@ void computeColor(lbm_node* array, int x, int y, parameterSet* params, uchar4* i
 	}
 	else
 	{
-		switch (params->mode)
+		switch (mode)
 		{
-		case(RHO):
-			image[i] = getRgbRho(array[i].rho, params);
-			break;
 		case(CURL):
-			image[i] = getRgbCurl(x, y, array, params);
+			image[i] = getRgbCurl(x, y, array);
 			break;
 		case(SPEED):
 			image[i] = getRgbU(sqrt(array[i].ux * array[i].ux + array[i].uy * array[i].uy));
@@ -162,7 +113,7 @@ void computeColor(lbm_node* array, int x, int y, parameterSet* params, uchar4* i
 }
 
 __device__
-void macroGen(float* f, float* ux, float* uy, float* rho, int i, parameterSet* params)
+void macroGen(float* f, float* ux, float* uy, float* rho, int i)
 {
 	const float top_row = f[6] + f[2] + f[5];
 	const float mid_row = f[3] + f[0] + f[1];
@@ -194,78 +145,77 @@ float accelGen(int node_num, float ux, float uy, float u2, float rho, d2q9_node*
 }
 
 __device__
-void doLeftWall(int x, int y, lbm_node* after, d2q9_node* d2q9, float v, parameterSet* params)
+void doLeftWall(int x, int y, lbm_node* after, d2q9_node* d2q9)
 {
-	(after[getIndex(x, y, params)].f)[EAST] = d2q9[EAST].wt  * (1 + 3 * v + 3 * v * v);
-	(after[getIndex(x, y, params)].f)[NORTHEAST] = d2q9[NORTHEAST].wt * (1 + 3 * v + 3 * v * v);
-	(after[getIndex(x, y, params)].f)[SOUTHEAST] = d2q9[SOUTHEAST].wt * (1 + 3 * v + 3 * v * v);
+	(after[INDEX(x, y)].f)[EAST] = d2q9[EAST].wt  * (1 + 3 * VELOCITY + 3 * VELOCITY_SQUARED);
+	(after[INDEX(x, y)].f)[NORTHEAST] = d2q9[NORTHEAST].wt * (1 + 3 * VELOCITY + 3 * VELOCITY_SQUARED);
+	(after[INDEX(x, y)].f)[SOUTHEAST] = d2q9[SOUTHEAST].wt * (1 + 3 * VELOCITY + 3 * VELOCITY_SQUARED);
 }
 
 __device__
-void doRightWall(int x, int y, lbm_node* after, d2q9_node* d2q9, float v, parameterSet* params)
+void doRightWall(int x, int y, lbm_node* after, d2q9_node* d2q9)
 {
-	(after[getIndex(x, y, params)].f)[WEST] = d2q9[WEST].wt  * (1 - 3 * v + 3 * v * v);
-	(after[getIndex(x, y, params)].f)[NORTHWEST] = d2q9[NORTHWEST].wt * (1 - 3 * v + 3 * v * v);
-	(after[getIndex(x, y, params)].f)[SOUTHWEST] = d2q9[SOUTHWEST].wt * (1 - 3 * v + 3 * v * v);
+	(after[INDEX(x, y)].f)[WEST] = d2q9[WEST].wt  * (1 - 3 * VELOCITY + 3 * VELOCITY_SQUARED);
+	(after[INDEX(x, y)].f)[NORTHWEST] = d2q9[NORTHWEST].wt * (1 - 3 * VELOCITY + 3 * VELOCITY_SQUARED);
+	(after[INDEX(x, y)].f)[SOUTHWEST] = d2q9[SOUTHWEST].wt * (1 - 3 * VELOCITY + 3 * VELOCITY_SQUARED);
 }
 
 //(top and bottom walls)
 __device__
-void doFlanks(int x, int y, lbm_node* after, d2q9_node* d2q9, float v, parameterSet* params)
+void doFlanks(int x, int y, lbm_node* after, d2q9_node* d2q9)
 {
-	(after[getIndex(x, y, params)].f)[NONE] = d2q9[NONE].wt  * (1 - 1.5 * v * v);
-	(after[getIndex(x, y, params)].f)[EAST] = d2q9[EAST].wt  * (1 + 3 * v + 3 * v * v);
-	(after[getIndex(x, y, params)].f)[WEST] = d2q9[WEST].wt  * (1 - 3 * v + 3 * v * v);
-	(after[getIndex(x, y, params)].f)[NORTH] = d2q9[NORTH].wt  * (1 - 1.5 * v * v);
-	(after[getIndex(x, y, params)].f)[SOUTH] = d2q9[SOUTH].wt  * (1 - 1.5 * v * v);
-	(after[getIndex(x, y, params)].f)[NORTHEAST] = d2q9[NORTHEAST].wt * (1 + 3 * v + 3 * v * v);
-	(after[getIndex(x, y, params)].f)[SOUTHEAST] = d2q9[SOUTHEAST].wt * (1 + 3 * v + 3 * v * v);
-	(after[getIndex(x, y, params)].f)[NORTHWEST] = d2q9[NORTHWEST].wt * (1 - 3 * v + 3 * v * v);
-	(after[getIndex(x, y, params)].f)[SOUTHWEST] = d2q9[SOUTHWEST].wt * (1 - 3 * v + 3 * v * v);
+	(after[INDEX(x, y)].f)[NONE] = d2q9[NONE].wt  * (1 - 1.5 * VELOCITY_SQUARED);
+	(after[INDEX(x, y)].f)[EAST] = d2q9[EAST].wt  * (1 + 3 * VELOCITY + 3 * VELOCITY_SQUARED);
+	(after[INDEX(x, y)].f)[WEST] = d2q9[WEST].wt  * (1 - 3 * VELOCITY + 3 * VELOCITY_SQUARED);
+	(after[INDEX(x, y)].f)[NORTH] = d2q9[NORTH].wt  * (1 - 1.5 * VELOCITY_SQUARED);
+	(after[INDEX(x, y)].f)[SOUTH] = d2q9[SOUTH].wt  * (1 - 1.5 * VELOCITY_SQUARED);
+	(after[INDEX(x, y)].f)[NORTHEAST] = d2q9[NORTHEAST].wt * (1 + 3 * VELOCITY + 3 * VELOCITY_SQUARED);
+	(after[INDEX(x, y)].f)[SOUTHEAST] = d2q9[SOUTHEAST].wt * (1 + 3 * VELOCITY + 3 * VELOCITY_SQUARED);
+	(after[INDEX(x, y)].f)[NORTHWEST] = d2q9[NORTHWEST].wt * (1 - 3 * VELOCITY + 3 * VELOCITY_SQUARED);
+	(after[INDEX(x, y)].f)[SOUTHWEST] = d2q9[SOUTHWEST].wt * (1 - 3 * VELOCITY + 3 * VELOCITY_SQUARED);
 }
 
 __device__
-void streamEdgeCases(int x, int y, lbm_node* after, unsigned char* barrier,
-	parameterSet* params, d2q9_node* d2q9)
+void streamEdgeCases(int x, int y, lbm_node* after, unsigned char* barrier, d2q9_node* d2q9)
 {
 
 	if (x == 0)
 	{
-		if (barrier[getIndex(x, y, params)] != 1)
+		if (barrier[INDEX(x, y)] != 1)
 		{
-			doLeftWall(x, y, after, d2q9, params->v, params);
+			doLeftWall(x, y, after, d2q9);
 		}
 	}
-	else if (x == params->width - 1)
+	else if (x == LATTICE_WIDTH - 1)
 	{
-		if (barrier[getIndex(x, y, params)] != 1)
+		if (barrier[INDEX(x, y)] != 1)
 		{
-			doRightWall(x, y, after, d2q9, params->v, params);
+			doRightWall(x, y, after, d2q9);
 		}
 	}
-	else if (y == 0 || y == params->width - 1)
+	else if (y == 0 || y == LATTICE_WIDTH - 1)
 	{
-		if (barrier[getIndex(x, y, params)] != 1)
+		if (barrier[INDEX(x, y)] != 1)
 		{
-			doFlanks(x, y, after, d2q9, params->v, params);
+			doFlanks(x, y, after, d2q9);
 		}
 	}
 }
 
 __global__
-void collide(d2q9_node* d2q9, lbm_node* before, lbm_node* after, parameterSet* params, unsigned char* barrier)
+void collide(d2q9_node* d2q9, lbm_node* before, lbm_node* after, unsigned char* barrier)
 {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
-	int i = getIndex(x, y, params);
+	int i = INDEX(x, y);
 
-	float omega = 1 / (3 * params->viscosity + 0.5);
+	float omega = 1 / (3 * VISCOSITY + 0.5);
 
 	//toss out out of bounds
-	if (x < 0 || x >= params->width || y < 0 || y >= params->height)
+	if (x < 0 || x >= LATTICE_WIDTH || y < 0 || y >= LATTICE_HEIGHT)
 		return;
 
-	macroGen(before[i].f, &(after[i].ux), &(after[i].uy), &(after[i].rho), i, params);
+	macroGen(before[i].f, &(after[i].ux), &(after[i].uy), &(after[i].rho), i);
 
 	int dir = 0;
 	for (dir = 0; dir < 9; dir += 1)
@@ -280,26 +230,24 @@ void collide(d2q9_node* d2q9, lbm_node* before, lbm_node* after, parameterSet* p
 
 //stream: handle particle propagation, ignoring edge cases.
 __global__
-void stream(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
-	unsigned char* barrier, parameterSet* params)
+void stream(d2q9_node* d2q9, lbm_node* before, lbm_node* after, unsigned char* barrier)
 {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
-	int i = getIndex(x, y, params);
-
+	int i = INDEX(x, y);
 
 	//toss out out of bounds and edge cases
-	if (x < 0 || x >= params->width || y < 0 || y >= params->height)
+	if (x < 0 || x >= LATTICE_WIDTH || y < 0 || y >= LATTICE_HEIGHT)
 		return;
 
 	after[i].rho = before[i].rho;
 	after[i].ux = before[i].ux;
 	after[i].uy = before[i].uy;
 
-	if (!(x > 0 && x < params->width - 1 && y > 0 && y < params->height - 1))
+	if (!(x > 0 && x < LATTICE_WIDTH - 1 && y > 0 && y < LATTICE_HEIGHT - 1))
 	{
 		//return;
-		streamEdgeCases(x, y, after, barrier, params, d2q9);
+		streamEdgeCases(x, y, after, barrier, d2q9);
 	}
 	else
 	{
@@ -307,46 +255,47 @@ void stream(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
 		int dir = 0;
 		for (dir = 0;dir < 9;dir += 1)
 		{
-			(after[getIndex(d2q9[dir].ex + x, -d2q9[dir].ey + y, params)].f)[dir] =
+			(after[INDEX(d2q9[dir].ex + x, -d2q9[dir].ey + y)].f)[dir] =
 				before[i].f[dir];
 		}
 	}
 }
 
 __global__
-void bounceAndRender(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
-	unsigned char* barrier, parameterSet* params, uchar4* image)
+void bounceAndRender(renderMode mode, d2q9_node* d2q9, 
+	lbm_node* before, lbm_node* after,
+	unsigned char* barrier, uchar4* image)
 {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
-	int i = getIndex(x, y, params);
+	int i = INDEX(x, y);
 
 	//toss out out of bounds and edge cases
-	if (x < 0 || x >= params->width || y < 0 || y >= params->height)
+	if (x < 0 || x >= LATTICE_WIDTH || y < 0 || y >= LATTICE_HEIGHT)
 		return;
 
-	if (x > 0 && x < params->width - 1 && y>0 && y < params->height - 1)
+	if (x > 0 && x < LATTICE_WIDTH - 1 && y > 0 && y < LATTICE_HEIGHT - 1)
 	{
 		if (barrier[i] == 1)
 		{
 			int dir;
 			for (dir = 1; dir < 9; dir += 1)
 			{
-				if (d2q9[dir].op > 0 && (after[i].f)[dir]>0)
+				if (d2q9[dir].op > 0 && (after[i].f)[dir] > 0)
 				{
-					(after[getIndex(d2q9[dir].ex + x, -d2q9[dir].ey + y, params)].f)[dir]
+					(after[INDEX(d2q9[dir].ex + x, -d2q9[dir].ey + y)].f)[dir]
 						= (before[i].f)[d2q9[dir].op];
 				}
 			}
 		}
 	}
 
-	computeColor(after, x, y, params, image, barrier);
+	computeColor(mode, after, x, y, image, barrier);
 }
 
 //display stats of all detected cuda capable devices, and return the number
 extern "C"
-int deviceQuery()
+void printDeviceInfo()
 {
 	cudaDeviceProp prop;
 	int nDevices = 1;
@@ -359,16 +308,14 @@ int deviceQuery()
 	{
 		ierr = cudaGetDeviceProperties(&prop, i);
 		printf("Device number: %d\n", i);
-		printf("  Device name: %s\n", prop.name);
-		printf("  Compute capability: %d.%d\n", prop.major, prop.minor);
-		printf("  Max threads per block: %d\n", prop.maxThreadsPerBlock);
-		printf("  Max threads in X-dimension of block: %d\n", prop.maxThreadsDim[0]);
-		printf("  Max threads in Y-dimension of block: %d\n", prop.maxThreadsDim[1]);
-		printf("  Max threads in Z-dimension of block: %d\n\n", prop.maxThreadsDim[2]);
+		printf("Device name: %s\n", prop.name);
+		printf("Compute capability: %d.%d\n", prop.major, prop.minor);
+		printf("Max threads per block: %d\n", prop.maxThreadsPerBlock);
+		printf("Max threads in X-LATTICE_DIMENSION of block: %d\n", prop.maxThreadsDim[0]);
+		printf("Max threads in Y-LATTICE_DIMENSION of block: %d\n", prop.maxThreadsDim[1]);
+		printf("Max threads in Z-LATTICE_DIMENSION of block: %d\n\n", prop.maxThreadsDim[2]);
 		if (ierr != cudaSuccess) { printf("error: %s\n", cudaGetErrorString(ierr)); }
 	}
-
-	return nDevices;
 }
 
 extern "C"
@@ -378,20 +325,17 @@ void initPboResource(GLuint pbo)
 }
 
 extern "C" 
-void initCUDA(d2q9_node * d2q9, parameterSet *params, int W, int H, 
-	lbm_node* array1, lbm_node* array2, unsigned char* barrier)
+void initCUDA(d2q9_node * d2q9, lbm_node* array1, lbm_node* array2, unsigned char* barrier)
 {
 	ierrSync = cudaMalloc(&d2q9_gpu, 9 * sizeof(d2q9_node));
-	ierrSync = cudaMalloc(&params_gpu, sizeof(parameterSet));
-	ierrSync = cudaMalloc(&barrier_gpu, sizeof(unsigned char) * W * H);
-	ierrSync = cudaMalloc(&array1_gpu, sizeof(lbm_node) * W * H);
-	ierrSync = cudaMalloc(&array2_gpu, sizeof(lbm_node) * W * H);
+	ierrSync = cudaMalloc(&barrier_gpu, sizeof(unsigned char) * LATTICE_DIMENSION);
+	ierrSync = cudaMalloc(&array1_gpu, sizeof(lbm_node) * LATTICE_DIMENSION);
+	ierrSync = cudaMalloc(&array2_gpu, sizeof(lbm_node) * LATTICE_DIMENSION);
 
 	ierrSync = cudaMemcpy(d2q9_gpu, d2q9, sizeof(d2q9_node) * 9, cudaMemcpyHostToDevice);
-	ierrSync = cudaMemcpy(params_gpu, params, sizeof(*params), cudaMemcpyHostToDevice);
-	ierrSync = cudaMemcpy(barrier_gpu, barrier, sizeof(unsigned char) * W * H, cudaMemcpyHostToDevice);
-	ierrSync = cudaMemcpy(array1_gpu, array1, sizeof(lbm_node) * W * H, cudaMemcpyHostToDevice);
-	ierrSync = cudaMemcpy(array2_gpu, array2, sizeof(lbm_node) * W * H, cudaMemcpyHostToDevice);
+	ierrSync = cudaMemcpy(barrier_gpu, barrier, sizeof(unsigned char) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
+	ierrSync = cudaMemcpy(array1_gpu, array1, sizeof(lbm_node) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
+	ierrSync = cudaMemcpy(array2_gpu, array2, sizeof(lbm_node) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
 
 	cudaDeviceSynchronize();
 }
@@ -400,7 +344,6 @@ extern "C"
 void freeCUDA()
 {
 	cudaFree(d2q9_gpu);
-	cudaFree(params_gpu);
 	cudaFree(array1_gpu);
 	cudaFree(array2_gpu);
 	cudaFree(barrier_gpu);
@@ -409,7 +352,7 @@ void freeCUDA()
 
 //render the image (but do not display it yet)
 extern "C"
-void render(parameterSet* params, unsigned char* barrier)
+void launchKernels(bool barriersUpdated, renderMode mode, unsigned char* barrier)
 {
 	//reset image pointer
 	uchar4* d_out = 0;
@@ -419,13 +362,11 @@ void render(parameterSet* params, unsigned char* barrier)
 	cudaGraphicsResourceGetMappedPointer((void**)&d_out, NULL, cuda_pbo_resource);
 
 	//launch cuda kernels to calculate LBM step
-	for (int i = 0; i < params->stepsPerRender; i++)
+	for (int i = 0; i < STEPS_PER_RENDER; i++)
 	{
-		if (params->needsUpdate)
+		if (barriersUpdated)
 		{
-			cudaMemcpy(barrier_gpu, barrier, sizeof(unsigned char) * params->width * params->height, cudaMemcpyHostToDevice);
-			cudaMemcpy(params_gpu, params, sizeof(*params), cudaMemcpyHostToDevice);
-			params->needsUpdate = 0;
+			cudaMemcpy(barrier_gpu, barrier, sizeof(unsigned char) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
 			cudaDeviceSynchronize(); // Wait for the GPU to finish
 		}
 
@@ -434,25 +375,25 @@ void render(parameterSet* params, unsigned char* barrier)
 
 		//determine number of threads and blocks required
 		dim3 threads_per_block = dim3(32, 32, 1);
-		dim3 number_of_blocks = dim3(params->width / 32 + 1, params->height / 32 + 1, 1);
+		dim3 number_of_blocks = dim3(LATTICE_WIDTH / 32 + 1, LATTICE_HEIGHT / 32 + 1, 1);
 
-		collide<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, before, after, params_gpu, barrier_gpu);
+		collide<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, before, after, barrier_gpu);
 
 		ierrSync = cudaGetLastError();
-		ierrAsync = cudaDeviceSynchronize(); // Wait for the GPU to finish
+		ierrAsync = cudaDeviceSynchronize();
 
 		before = array2_gpu;
 		after = array1_gpu;
 
-		stream<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, before, after, barrier_gpu, params_gpu);
+		stream<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, before, after, barrier_gpu);
 
 		ierrSync = cudaGetLastError();
-		ierrAsync = cudaDeviceSynchronize(); // Wait for the GPU to finish
+		ierrAsync = cudaDeviceSynchronize();
 
-		bounceAndRender<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, before, after, barrier_gpu, params_gpu, d_out);
+		bounceAndRender<<<number_of_blocks, threads_per_block>>>(mode, d2q9_gpu, before, after, barrier_gpu, d_out);
 
 		ierrSync = cudaGetLastError();
-		ierrAsync = cudaDeviceSynchronize(); // Wait for the GPU to finish	
+		ierrAsync = cudaDeviceSynchronize();	
 	}
 
 	//unmap the resources for next time
