@@ -10,16 +10,17 @@
 GLuint pbo = 0;     // OpenGL pixel buffer object
 GLuint tex = 0;     // OpenGL texture object
 
-float rotate_x = 0.0, rotate_y = 0.0;
+float rotate_x = 0.0;
+float rotate_y = 0.0;
 float translate_z = -2.0;
 int previous_mouse_x, previous_mouse_y;
 int mouse_buttons = 0;
 
 bool barriersUpdated = true;
 render_mode mode = render_mode::CURL;
-
-//GPU/CPU interop memory pointers:
 unsigned char state = 0;
+
+// memory pointers:
 lbm_node* array1;
 lbm_node* array2;
 unsigned char* barrier;
@@ -153,7 +154,6 @@ void keyboard(unsigned char a, int b, int c)
 	barriersUpdated = true;
 }
 
-//gl exit callback
 void exitFunc()
 {
 	glDeleteBuffers(1, &pbo);

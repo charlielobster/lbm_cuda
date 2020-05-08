@@ -6,7 +6,6 @@
 
 #include "lbm_global.cuh"
 
-//display stats of all detected cuda capable devices, and return the number
 void lbm::printDeviceInfo()
 {
 	int nDevices = 0;
@@ -46,16 +45,6 @@ void lbm::initCUDA(d2q9_node * d2q9, lbm_node* array1, lbm_node* array2, unsigne
 	cudaDeviceSynchronize();
 }
 
-void lbm::freeCUDA()
-{
-	cudaFree(d2q9_gpu);
-	cudaFree(array1_gpu);
-	cudaFree(array2_gpu);
-	cudaFree(barrier_gpu);
-	cudaGraphicsUnregisterResource(cuda_pbo_resource);
-}
-
-//render the image (but do not display it yet)
 void lbm::launchKernels(render_mode mode, bool barriersUpdated, unsigned char* barrier)
 {
 	//reset image pointer
@@ -94,3 +83,13 @@ void lbm::launchKernels(render_mode mode, bool barriersUpdated, unsigned char* b
 	//unmap the resources for next time
 	cudaGraphicsUnmapResources(1, &cuda_pbo_resource, 0);
 }
+
+void lbm::freeCUDA()
+{
+	cudaFree(d2q9_gpu);
+	cudaFree(array1_gpu);
+	cudaFree(array2_gpu);
+	cudaFree(barrier_gpu);
+	cudaGraphicsUnregisterResource(cuda_pbo_resource);
+}
+

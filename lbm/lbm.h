@@ -47,15 +47,17 @@ typedef struct {
 	char x_position;			
 	char y_position;
 	float weight;
-	unsigned char opposite;	// opposite char
+	unsigned char opposite;
 } d2q9_node;
 
 class lbm 
 {
 public:
+	//display stats of all detected cuda capable devices
+	static void printDeviceInfo();
+
 	lbm() {}
 	~lbm() {}
-	static void printDeviceInfo();
 	void initPboResource(GLuint pbo);
 	void initCUDA(d2q9_node* d2q9, lbm_node* array1, lbm_node* array2, unsigned char* barrier);
 	void launchKernels(render_mode mode, bool barriersUpdated, unsigned char* barrier);
