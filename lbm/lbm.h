@@ -17,7 +17,7 @@
 #define INDEX(x, y) ((x) + (y) * LATTICE_WIDTH)
 #define CLIP(n) ((n) > 255 ? 255 : ((n) < 0 ? 0 : (n)))
 
-enum heading {
+typedef enum {
 	NONE = 0,
 	EAST,
 	NORTH,
@@ -27,14 +27,14 @@ enum heading {
 	NORTHWEST,
 	SOUTHWEST,
 	SOUTHEAST
-};
+} heading;
 
-enum render_mode {
+typedef enum {
 	CURL,
 	SPEED,
 	UX,
 	UY
-};
+} render_mode;
 
 typedef struct {
 	float ux;	// x velocity
@@ -56,7 +56,7 @@ public:
 	//display stats of all detected cuda capable devices
 	static void printDeviceInfo();
 
-	lbm() {}
+	lbm() : array1_gpu(0), array2_gpu(0), barrier_gpu(0), d2q9_gpu(0), cuda_pbo_resource(0) {}
 	~lbm() {}
 	void initPboResource(GLuint pbo);
 	void initCUDA(d2q9_node* d2q9, lbm_node* array1, lbm_node* array2, unsigned char* barrier);
