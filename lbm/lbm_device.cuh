@@ -1,8 +1,6 @@
 #ifndef _LBM_DEVICE_CUH_
 #define _LBM_DEVICE_CUH_
 
-#include <cuda_runtime.h>
-
 #include "lbm.h"
 
 class lbm_device

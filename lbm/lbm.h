@@ -1,6 +1,8 @@
 #ifndef _LBM_H_
 #define _LBM_H_
 
+#include <cuda_runtime.h>
+
 #define VISCOSITY 0.005
 #define CONTRAST 75
 #define VELOCITY 0.1

@@ -1,8 +1,6 @@
 #ifndef _LBM_GLOBAL_CUH_
 #define _LBM_GLOBAL_CUH_
 
-#include <cuda_runtime.h>
-
 #include "lbm_device.cuh"
 
 __global__

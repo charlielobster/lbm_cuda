@@ -4,7 +4,6 @@
 #include <helper_functions.h>
 #include <helper_cuda.h>
 
-#include "lbm.h"
 #include "lbm_global.cuh"
 
 //display stats of all detected cuda capable devices, and return the number
