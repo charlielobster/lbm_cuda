@@ -23,8 +23,8 @@ static void collide(d2q9_node* d2q9, lbm_node* before, lbm_node* after, unsigned
 	{
 		after[i].direction[dir] = before[i].direction[dir] + omega
 			* (lbm_device::accelGen(dir, after[i].ux, after[i].uy,
-				after[i].ux * after[i].ux + after[i].uy
-				* after[i].uy, after[i].rho, d2q9) - before[i].direction[dir]);
+				after[i].ux * after[i].ux + after[i].uy * after[i].uy, 
+				after[i].rho, d2q9) - before[i].direction[dir]);
 	}
 	return;
 }
@@ -110,16 +110,16 @@ static void color(render_mode mode, lbm_node* array, uchar4* image, unsigned cha
 	{
 		switch (mode)
 		{
-		case render_mode::CURL:
+		case CURL:
 			image[i] = lbm_device::getRgbCurl(x, y, array);
 			break;
-		case render_mode::SPEED:
+		case SPEED:
 			image[i] = lbm_device::getRgbU(sqrt(array[i].ux * array[i].ux + array[i].uy * array[i].uy));
 			break;
-		case render_mode::UX:
+		case UX:
 			image[i] = lbm_device::getRgbU(array[i].ux);
 			break;
-		case render_mode::UY:
+		case UY:
 			image[i] = lbm_device::getRgbU(array[i].uy);
 			break;
 		default:

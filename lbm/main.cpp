@@ -5,6 +5,7 @@
 #include <GL/freeglut.h>
 
 #include "lbm.h"
+#include "lbm_delegate.cuh"
 
 // texture and pixel objects
 GLuint pbo = 0;     // OpenGL pixel buffer object
@@ -17,16 +18,18 @@ int previous_mouse_x, previous_mouse_y;
 int mouse_buttons = 0;
 
 bool barriersUpdated = true;
-render_mode mode = render_mode::CURL;
+render_mode mode = CURL;
 unsigned char state = 0;
 
 // memory pointers:
-lbm_node* array1;
-lbm_node* array2;
-unsigned char* barrier;
+lbm_node array1[LATTICE_DIMENSION];
+lbm_node array2[LATTICE_DIMENSION];
+unsigned char barrier[LATTICE_DIMENSION];
 
 int current_button = GLUT_LEFT_BUTTON; 
-lbm l;
+
+// the delegate to the kernel layer
+lbm_delegate lbm;
 
 void clearBarriers()
 {
@@ -76,7 +79,6 @@ void initD2q9(d2q9_node* d2q9)
 
 void initArray1(d2q9_node* d2q9)
 {
-	array1 = (lbm_node*)calloc(LATTICE_DIMENSION, sizeof(lbm_node));	
 	int i;
 	for (int x = 0; x < LATTICE_WIDTH; x++)
 	{
@@ -101,15 +103,11 @@ void initArray1(d2q9_node* d2q9)
 
 void resetLattice() 
 {
-	l.initPboResource(pbo);
-
-	barrier = (unsigned char*)calloc(LATTICE_DIMENSION, sizeof(unsigned char));
-	array2 = (lbm_node*)calloc(LATTICE_DIMENSION, sizeof(lbm_node));
-
+	lbm.initPboResource(pbo);
 	d2q9_node* d2q9 = (d2q9_node*)calloc(9, sizeof(d2q9_node));
 	initD2q9(d2q9);
 	initArray1(d2q9);	
-	l.initCUDA(d2q9, array1, array2, barrier);
+	lbm.initCUDA(d2q9, array1, array2, barrier);
 }
 
 //keyboard callback
@@ -158,7 +156,7 @@ void exitFunc()
 {
 	glDeleteBuffers(1, &pbo);
 	glDeleteTextures(1, &tex);
-	l.freeCUDA();
+	lbm.freeCUDA();
 }
 
 void mouse(int button, int state, int x, int y)
@@ -209,7 +207,7 @@ void display()
 	glRotatef(rotate_x, 1.0, 0.0, 0.0);
 	glRotatef(rotate_y, 0.0, 1.0, 0.0);
 
-	l.launchKernels(mode, barriersUpdated, barrier);
+	lbm.launchKernels(mode, barriersUpdated, barrier);
 	barriersUpdated = false;
 
 	glEnable(GL_TEXTURE_2D);
@@ -266,7 +264,7 @@ void initGLUT(int* argc, char** argv)
 int main(int argc, char** argv) 
 {
 	//discover all Cuda-capable hardware
-	lbm::printDeviceInfo();
+	lbm_delegate::printDeviceInfo();
 	initGLUT(&argc, argv);
 	resetLattice();
 

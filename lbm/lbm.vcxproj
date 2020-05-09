@@ -82,15 +82,16 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="lbm.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lbm.h" />
+    <ClInclude Include="lbm_delegate.cuh" />
     <ClInclude Include="lbm_device.cuh" />
     <ClInclude Include="lbm_global.cuh" />
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="lbm_delegate.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
