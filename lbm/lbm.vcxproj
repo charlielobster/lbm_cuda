@@ -82,13 +82,14 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="lbm.cpp" />
+    <CudaCompile Include="lbm_delegate.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lbm.h" />
+    <ClInclude Include="lbm_delegate.h" />
     <ClInclude Include="lbm_device.cuh" />
     <ClInclude Include="lbm_global.cuh" />
   </ItemGroup>

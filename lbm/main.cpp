@@ -5,6 +5,7 @@
 #include <GL/freeglut.h>
 
 #include "lbm.h"
+#include "lbm_delegate.h"
 
 // texture and pixel objects
 GLuint pbo = 0;     // OpenGL pixel buffer object
@@ -13,12 +14,12 @@ GLuint tex = 0;     // OpenGL texture object
 float rotate_x = 0.0;
 float rotate_y = 0.0;
 float translate_z = -2.0;
-int previous_mouse_x, previous_mouse_y;
+int previous_mouse_x;
+int previous_mouse_y;
 int mouse_buttons = 0;
 
 bool barriersUpdated = true;
-render_mode mode = render_mode::CURL;
-unsigned char state = 0;
+render_mode mode = CURL;
 
 // memory pointers:
 lbm_node* array1;
@@ -26,7 +27,7 @@ lbm_node* array2;
 unsigned char* barrier;
 
 int current_button = GLUT_LEFT_BUTTON; 
-lbm l;
+lbm_delegate lbm;
 
 void clearBarriers()
 {
@@ -101,7 +102,7 @@ void initArray1(d2q9_node* d2q9)
 
 void resetLattice() 
 {
-	l.initPboResource(pbo);
+	lbm.initPboResource(pbo);
 
 	barrier = (unsigned char*)calloc(LATTICE_DIMENSION, sizeof(unsigned char));
 	array2 = (lbm_node*)calloc(LATTICE_DIMENSION, sizeof(lbm_node));
@@ -109,7 +110,7 @@ void resetLattice()
 	d2q9_node* d2q9 = (d2q9_node*)calloc(9, sizeof(d2q9_node));
 	initD2q9(d2q9);
 	initArray1(d2q9);	
-	l.initCUDA(d2q9, array1, array2, barrier);
+	lbm.initCUDA(d2q9, array1, array2, barrier);
 }
 
 //keyboard callback
@@ -158,7 +159,7 @@ void exitFunc()
 {
 	glDeleteBuffers(1, &pbo);
 	glDeleteTextures(1, &tex);
-	l.freeCUDA();
+	lbm.freeCUDA();
 }
 
 void mouse(int button, int state, int x, int y)
@@ -209,7 +210,7 @@ void display()
 	glRotatef(rotate_x, 1.0, 0.0, 0.0);
 	glRotatef(rotate_y, 0.0, 1.0, 0.0);
 
-	l.launchKernels(mode, barriersUpdated, barrier);
+	lbm.launchKernels(mode, barriersUpdated, barrier);
 	barriersUpdated = false;
 
 	glEnable(GL_TEXTURE_2D);
@@ -219,7 +220,7 @@ void display()
 		0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
 	glBegin(GL_QUADS);
-	glTexCoord2f(0.0, 0.0); glVertex3f(-2.0, -1.0, 0.0);
+	glTexCoord2f(0.0, 0.0);	glVertex3f(-2.0, -1.0, 0.0);
 	glTexCoord2f(0.0, 1.0); glVertex3f(-2.0, 1.0, 0.0);
 	glTexCoord2f(1.0, 1.0); glVertex3f(2.0, 1.0, 0.0);
 	glTexCoord2f(1.0, 0.0); glVertex3f(2.0, -1.0, 0.0);
@@ -266,7 +267,7 @@ void initGLUT(int* argc, char** argv)
 int main(int argc, char** argv) 
 {
 	//discover all Cuda-capable hardware
-	lbm::printDeviceInfo();
+	lbm_delegate::printDeviceInfo();
 	initGLUT(&argc, argv);
 	resetLattice();
 

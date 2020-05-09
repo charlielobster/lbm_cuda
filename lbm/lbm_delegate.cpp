@@ -4,16 +4,17 @@
 #include <helper_functions.h>
 #include <helper_cuda.h>
 
+#include "lbm_delegate.h"
 #include "lbm_global.cuh"
 
-void lbm::printDeviceInfo()
+void lbm_delegate::printDeviceInfo()
 {
 	int nDevices = 0;
-	cudaError_t ierr = cudaGetDeviceCount(&nDevices);
+	cudaError_t ce = cudaGetDeviceCount(&nDevices);
 	cudaDeviceProp prop;
 	for (int i = 0; i < nDevices; ++i)
 	{
-		ierr = cudaGetDeviceProperties(&prop, i);
+		ce = cudaGetDeviceProperties(&prop, i);
 		printf("Device number: %d\n", i);
 		printf("Device name: %s\n", prop.name);
 		printf("Compute capability: %d.%d\n", prop.major, prop.minor);
@@ -21,16 +22,16 @@ void lbm::printDeviceInfo()
 		printf("Max threads in X-dimension of block: %d\n", prop.maxThreadsDim[0]);
 		printf("Max threads in Y-dimension of block: %d\n", prop.maxThreadsDim[1]);
 		printf("Max threads in Z-dimension of block: %d\n\n", prop.maxThreadsDim[2]);
-		if (ierr != cudaSuccess) { printf("error: %s\n", cudaGetErrorString(ierr)); }
+		if (ce != cudaSuccess) { printf("error: %s\n", cudaGetErrorString(ce)); }
 	}
 }
 
-void lbm::initPboResource(GLuint pbo)
+void lbm_delegate::initPboResource(GLuint pbo)
 {
 	cudaGraphicsGLRegisterBuffer(&cuda_pbo_resource, pbo, cudaGraphicsMapFlagsWriteDiscard);
 }
 
-void lbm::initCUDA(d2q9_node * d2q9, lbm_node* array1, lbm_node* array2, unsigned char* barrier)
+void lbm_delegate::initCUDA(d2q9_node * d2q9, lbm_node* array1, lbm_node* array2, unsigned char* barrier)
 {
 	cudaError_t ce = cudaMalloc(&d2q9_gpu, 9 * sizeof(d2q9_node));
 	ce = cudaMalloc(&barrier_gpu, sizeof(unsigned char) * LATTICE_DIMENSION);
@@ -45,7 +46,7 @@ void lbm::initCUDA(d2q9_node * d2q9, lbm_node* array1, lbm_node* array2, unsigne
 	cudaDeviceSynchronize();
 }
 
-void lbm::launchKernels(render_mode mode, bool barriersUpdated, unsigned char* barrier)
+void lbm_delegate::launchKernels(render_mode mode, bool barriersUpdated, unsigned char* barrier)
 {
 	//reset image pointer
 	uchar4* d_out = 0;
@@ -84,7 +85,7 @@ void lbm::launchKernels(render_mode mode, bool barriersUpdated, unsigned char* b
 	cudaGraphicsUnmapResources(1, &cuda_pbo_resource, 0);
 }
 
-void lbm::freeCUDA()
+void lbm_delegate::freeCUDA()
 {
 	cudaFree(d2q9_gpu);
 	cudaFree(array1_gpu);
