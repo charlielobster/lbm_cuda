@@ -154,37 +154,36 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\lighting\vsLogLib.h" />
-    <ClInclude Include="..\lighting\vsMathLib.h" />
-    <ClInclude Include="..\lighting\vsResourceLib.h" />
-    <ClInclude Include="..\lighting\vsResSurfRevLib.h" />
-    <ClInclude Include="..\lighting\vsShaderLib.h" />
+    <ClCompile Include="light.cpp" />
+    <ClCompile Include="vsLogLib.cpp" />
+    <ClCompile Include="vsMathLib.cpp" />
+    <ClCompile Include="vsResourceLib.cpp" />
+    <ClCompile Include="vsResSurfRevLib.cpp" />
+    <ClCompile Include="vsShaderLib.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\lighting\shaders\color.frag" />
-    <None Include="..\lighting\shaders\color.vert" />
-    <None Include="..\lighting\shaders\dirdif.frag" />
-    <None Include="..\lighting\shaders\dirdif.vert" />
-    <None Include="..\lighting\shaders\dirdifamb.frag" />
-    <None Include="..\lighting\shaders\dirdifamb.vert" />
-    <None Include="..\lighting\shaders\dirdifambspec.frag" />
-    <None Include="..\lighting\shaders\dirdifambspec.vert" />
-    <None Include="..\lighting\shaders\dirlightdiffambpix.frag" />
-    <None Include="..\lighting\shaders\pixeldirdifambspec.frag" />
-    <None Include="..\lighting\shaders\pixeldirdifambspec.vert" />
-    <None Include="..\lighting\shaders\pointlight.frag" />
-    <None Include="..\lighting\shaders\pointlight.vert" />
-    <None Include="..\lighting\shaders\spotlight.frag" />
-    <None Include="..\lighting\shaders\spotlight.vert" />
+    <ClInclude Include="vsLogLib.h" />
+    <ClInclude Include="vsMathLib.h" />
+    <ClInclude Include="vsResourceLib.h" />
+    <ClInclude Include="vsResSurfRevLib.h" />
+    <ClInclude Include="vsShaderLib.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\lighting\light.cpp" />
-    <ClCompile Include="..\lighting\lighting_2019.cpp" />
-    <ClCompile Include="..\lighting\vsLogLib.cpp" />
-    <ClCompile Include="..\lighting\vsMathLib.cpp" />
-    <ClCompile Include="..\lighting\vsResourceLib.cpp" />
-    <ClCompile Include="..\lighting\vsResSurfRevLib.cpp" />
-    <ClCompile Include="..\lighting\vsShaderLib.cpp" />
+    <None Include="shaders\color.frag" />
+    <None Include="shaders\color.vert" />
+    <None Include="shaders\dirdif.frag" />
+    <None Include="shaders\dirdif.vert" />
+    <None Include="shaders\dirdifamb.frag" />
+    <None Include="shaders\dirdifamb.vert" />
+    <None Include="shaders\dirdifambspec.frag" />
+    <None Include="shaders\dirdifambspec.vert" />
+    <None Include="shaders\dirlightdiffambpix.frag" />
+    <None Include="shaders\pixeldirdifambspec.frag" />
+    <None Include="shaders\pixeldirdifambspec.vert" />
+    <None Include="shaders\pointlight.frag" />
+    <None Include="shaders\pointlight.vert" />
+    <None Include="shaders\spotlight.frag" />
+    <None Include="shaders\spotlight.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

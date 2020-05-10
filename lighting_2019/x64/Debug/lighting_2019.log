@@ -1,16 +1,18 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(453,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
   light.cpp
+  lighting_2019.cpp
   vsLogLib.cpp
   vsMathLib.cpp
-D:\Users\skoob\Source\Repos\lbm_cuda\lighting_2019\vsMathLib.cpp(237,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-D:\Users\skoob\Source\Repos\lbm_cuda\lighting_2019\vsMathLib.cpp(238,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-D:\Users\skoob\Source\Repos\lbm_cuda\lighting_2019\vsMathLib.cpp(338,10): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-D:\Users\skoob\Source\Repos\lbm_cuda\lighting_2019\vsMathLib.cpp(755,12): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-D:\Users\skoob\Source\Repos\lbm_cuda\lighting_2019\vsMathLib.cpp(787,13): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
+D:\Users\skoob\Source\Repos\lbm_cuda\lighting\vsMathLib.cpp(237,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+D:\Users\skoob\Source\Repos\lbm_cuda\lighting\vsMathLib.cpp(238,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+D:\Users\skoob\Source\Repos\lbm_cuda\lighting\vsMathLib.cpp(338,10): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+D:\Users\skoob\Source\Repos\lbm_cuda\lighting\vsMathLib.cpp(755,12): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+D:\Users\skoob\Source\Repos\lbm_cuda\lighting\vsMathLib.cpp(787,13): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
   vsResourceLib.cpp
   vsResSurfRevLib.cpp
-D:\Users\skoob\Source\Repos\lbm_cuda\lighting_2019\vsResSurfRevLib.cpp(134,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+D:\Users\skoob\Source\Repos\lbm_cuda\lighting\vsResSurfRevLib.cpp(134,58): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
   vsShaderLib.cpp
-D:\Users\skoob\Source\Repos\lbm_cuda\lighting_2019\vsShaderLib.cpp(570,49): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Users\skoob\Source\Repos\lbm_cuda\lighting\vsShaderLib.cpp(570,49): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
   Generating Code...
-  lighting_2019.vcxproj -> D:\Users\skoob\Source\Repos\lbm_cuda\lighting_2019\..\bin\win64\debug\lighting_2019.exe
+lighting_2019.obj : error LNK2005: main already defined in light.obj
+..\bin\win64\debug\lighting.exe : fatal error LNK1169: one or more multiply defined symbols found

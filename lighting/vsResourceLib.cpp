@@ -96,7 +96,7 @@ VSResourceLib::setMaterial(Material &aMat) {
 
 		std::map<std::string, MaterialSemantics>::iterator iter;
 		for (iter = mMatSemanticMap.begin(); iter != mMatSemanticMap.end(); ++iter) {
-			void *value;
+			void *value = NULL;
 			switch ((*iter).second) {
 				case DIFFUSE: value = (void *)aMat.diffuse;
 					break;

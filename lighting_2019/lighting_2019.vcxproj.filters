@@ -13,59 +13,95 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="shaders">
+      <UniqueIdentifier>{b6e3f95c-a603-4023-9998-7e89e676138f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="light.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vsLogLib.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vsMathLib.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vsResourceLib.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vsResSurfRevLib.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vsShaderLib.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="vsShaderLib.h">
+    <ClInclude Include="..\lighting\vsLogLib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vsResSurfRevLib.h">
+    <ClInclude Include="..\lighting\vsMathLib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vsResourceLib.h">
+    <ClInclude Include="..\lighting\vsResourceLib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vsMathLib.h">
+    <ClInclude Include="..\lighting\vsResSurfRevLib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vsLogLib.h">
+    <ClInclude Include="..\lighting\vsShaderLib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\color.frag" />
-    <None Include="shaders\color.vert" />
-    <None Include="shaders\dirdif.frag" />
-    <None Include="shaders\dirdif.vert" />
-    <None Include="shaders\dirdifamb.frag" />
-    <None Include="shaders\dirdifamb.vert" />
-    <None Include="shaders\dirdifambspec.frag" />
-    <None Include="shaders\dirdifambspec.vert" />
-    <None Include="shaders\dirlightdiffambpix.frag" />
-    <None Include="shaders\pixeldirdifambspec.frag" />
-    <None Include="shaders\pixeldirdifambspec.vert" />
-    <None Include="shaders\pointlight.frag" />
-    <None Include="shaders\pointlight.vert" />
-    <None Include="shaders\spotlight.frag" />
-    <None Include="shaders\spotlight.vert" />
+    <None Include="..\lighting\shaders\color.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\lighting\shaders\color.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\lighting\shaders\dirdif.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\lighting\shaders\dirdif.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\lighting\shaders\dirdifamb.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\lighting\shaders\dirdifamb.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\lighting\shaders\dirdifambspec.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\lighting\shaders\dirdifambspec.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\lighting\shaders\dirlightdiffambpix.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\lighting\shaders\pixeldirdifambspec.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\lighting\shaders\pixeldirdifambspec.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\lighting\shaders\pointlight.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\lighting\shaders\pointlight.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\lighting\shaders\spotlight.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\lighting\shaders\spotlight.vert">
+      <Filter>shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\lighting\light.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lighting\lighting_2019.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lighting\vsLogLib.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lighting\vsMathLib.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lighting\vsResourceLib.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lighting\vsResSurfRevLib.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lighting\vsShaderLib.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
