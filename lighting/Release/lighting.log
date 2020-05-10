@@ -1,0 +1,121 @@
+﻿  light.cpp
+d:\users\skoob\source\repos\l3dlighting1\lighting\light.cpp(381): error C3861: 'glutInitContextVersion': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\light.cpp(382): error C2065: 'GLUT_CORE_PROFILE': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\light.cpp(382): error C3861: 'glutInitContextProfile': identifier not found
+  vsLogLib.cpp
+  vsMathLib.cpp
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsmathlib.cpp(465): error C3861: 'glProgramUniformMatrix4fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsmathlib.cpp(513): error C3861: 'glProgramUniformMatrix3fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsmathlib.cpp(519): error C3861: 'glProgramUniformMatrix4fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsmathlib.cpp(604): error C3861: 'glProgramUniformMatrix4fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsmathlib.cpp(612): error C3861: 'glProgramUniformMatrix3fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsmathlib.cpp(619): error C3861: 'glProgramUniformMatrix3fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsmathlib.cpp(626): error C3861: 'glProgramUniformMatrix3fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsmathlib.cpp(633): error C3861: 'glProgramUniformMatrix4fv': identifier not found
+  vsResourceLib.cpp
+  vsResSurfRevLib.cpp
+  vsShaderLib.cpp
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(240): error C3861: 'glProgramUniform1i': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(252): error C3861: 'glProgramUniform1f': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(266): error C3861: 'glProgramUniform1fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(269): error C3861: 'glProgramUniform2fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(272): error C3861: 'glProgramUniform3fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(275): error C3861: 'glProgramUniform4fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(280): error C3861: 'glProgramUniform1dv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(282): error C2065: 'GL_DOUBLE_VEC2': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(283): error C3861: 'glProgramUniform2dv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(285): error C2065: 'GL_DOUBLE_VEC3': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(286): error C3861: 'glProgramUniform3dv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(288): error C2065: 'GL_DOUBLE_VEC4': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(289): error C3861: 'glProgramUniform4dv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(331): error C3861: 'glProgramUniform1iv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(335): error C3861: 'glProgramUniform2iv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(339): error C3861: 'glProgramUniform3iv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(343): error C3861: 'glProgramUniform4iv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(348): error C3861: 'glProgramUniform1uiv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(351): error C3861: 'glProgramUniform2uiv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(354): error C3861: 'glProgramUniform3uiv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(357): error C3861: 'glProgramUniform4uiv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(362): error C3861: 'glProgramUniformMatrix2fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(365): error C3861: 'glProgramUniformMatrix3fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(368): error C3861: 'glProgramUniformMatrix4fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(371): error C3861: 'glProgramUniformMatrix2x3fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(374): error C3861: 'glProgramUniformMatrix2x4fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(377): error C3861: 'glProgramUniformMatrix3x2fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(380): error C3861: 'glProgramUniformMatrix3x4fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(383): error C3861: 'glProgramUniformMatrix4x2fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(386): error C3861: 'glProgramUniformMatrix4x3fv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(390): error C2065: 'GL_DOUBLE_MAT2': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(391): error C3861: 'glProgramUniformMatrix2dv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(393): error C2065: 'GL_DOUBLE_MAT3': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(394): error C3861: 'glProgramUniformMatrix3dv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(396): error C2065: 'GL_DOUBLE_MAT4': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(397): error C3861: 'glProgramUniformMatrix4dv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(399): error C2065: 'GL_DOUBLE_MAT2x3': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(400): error C3861: 'glProgramUniformMatrix2x3dv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(402): error C2065: 'GL_DOUBLE_MAT2x4': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(403): error C3861: 'glProgramUniformMatrix2x4dv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(405): error C2065: 'GL_DOUBLE_MAT3x2': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(406): error C3861: 'glProgramUniformMatrix3x2dv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(408): error C2065: 'GL_DOUBLE_MAT3x4': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(409): error C3861: 'glProgramUniformMatrix3x4dv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(411): error C2065: 'GL_DOUBLE_MAT4x2': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(412): error C3861: 'glProgramUniformMatrix4x2dv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(414): error C2065: 'GL_DOUBLE_MAT4x3': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(415): error C3861: 'glProgramUniformMatrix4x3dv': identifier not found
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(282): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(285): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(288): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(390): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(393): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(396): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(399): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(402): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(405): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(408): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(411): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(414): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(560): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  d:\windows kits\10\include\10.0.17763.0\ucrt\stdio.h(208): note: see declaration of 'fopen'
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(652): error C2065: 'GL_DOUBLE_MAT2': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(653): error C2065: 'GL_DOUBLE_MAT2x3': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(654): error C2065: 'GL_DOUBLE_MAT2x4': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(660): error C2065: 'GL_DOUBLE_MAT3': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(661): error C2065: 'GL_DOUBLE_MAT3x2': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(662): error C2065: 'GL_DOUBLE_MAT3x4': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(668): error C2065: 'GL_DOUBLE_MAT4': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(669): error C2065: 'GL_DOUBLE_MAT4x2': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(670): error C2065: 'GL_DOUBLE_MAT4x3': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(652): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(653): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(654): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(660): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(661): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(662): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(668): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(669): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(670): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(873): error C2065: 'GL_DOUBLE_VEC2': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(876): error C2065: 'GL_DOUBLE_VEC3': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(879): error C2065: 'GL_DOUBLE_VEC4': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(981): error C2065: 'GL_DOUBLE_MAT2': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(984): error C2065: 'GL_DOUBLE_MAT3': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(987): error C2065: 'GL_DOUBLE_MAT4': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(990): error C2065: 'GL_DOUBLE_MAT2x3': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(993): error C2065: 'GL_DOUBLE_MAT2x4': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(996): error C2065: 'GL_DOUBLE_MAT3x2': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(999): error C2065: 'GL_DOUBLE_MAT3x4': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(1002): error C2065: 'GL_DOUBLE_MAT4x2': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(1005): error C2065: 'GL_DOUBLE_MAT4x3': undeclared identifier
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(873): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(876): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(879): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(981): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(984): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(987): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(990): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(993): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(996): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(999): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(1002): error C2051: case expression not constant
+d:\users\skoob\source\repos\l3dlighting1\lighting\vsshaderlib.cpp(1002): fatal error C1003: error count exceeds 100; stopping compilation

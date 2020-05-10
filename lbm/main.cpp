@@ -25,6 +25,7 @@ render_mode mode = CURL;
 lbm_node* array1;
 lbm_node* array2;
 unsigned char* barrier;
+unsigned char out[LATTICE_DIMENSION];
 
 int current_button = GLUT_LEFT_BUTTON; 
 lbm_delegate lbm;
@@ -77,6 +78,7 @@ void initD2q9(d2q9_node* d2q9)
 
 void initArray1(d2q9_node* d2q9)
 {
+	//out = (unsigned char*)calloc(LATTICE_DIMENSION, sizeof(unsigned char));
 	array1 = (lbm_node*)calloc(LATTICE_DIMENSION, sizeof(lbm_node));	
 	int i;
 	for (int x = 0; x < LATTICE_WIDTH; x++)
@@ -210,7 +212,7 @@ void display()
 	glRotatef(rotate_x, 1.0, 0.0, 0.0);
 	glRotatef(rotate_y, 0.0, 1.0, 0.0);
 
-	lbm.launchKernels(mode, barriersUpdated, barrier);
+	lbm.launchKernels(mode, barriersUpdated, barrier, out);
 	barriersUpdated = false;
 
 	glEnable(GL_TEXTURE_2D);

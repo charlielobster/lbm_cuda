@@ -16,7 +16,7 @@ public:
 	~lbm_delegate() {}
 	void initPboResource(GLuint pbo);
 	void initCUDA(d2q9_node* d2q9, lbm_node* array1, lbm_node* array2, unsigned char* barrier);
-	void launchKernels(render_mode mode, bool barriersUpdated, unsigned char* barrier);
+	void launchKernels(render_mode mode, bool barriersUpdated, unsigned char* barrier, unsigned char* out);
 	void freeCUDA();
 
 private:

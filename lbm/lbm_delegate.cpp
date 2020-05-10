@@ -46,7 +46,7 @@ void lbm_delegate::initCUDA(d2q9_node * d2q9, lbm_node* array1, lbm_node* array2
 	cudaDeviceSynchronize();
 }
 
-void lbm_delegate::launchKernels(render_mode mode, bool barriersUpdated, unsigned char* barrier)
+void lbm_delegate::launchKernels(render_mode mode, bool barriersUpdated, unsigned char* barrier, unsigned char* out)
 {
 	//reset image pointer
 	uchar4* d_out = 0;
@@ -80,6 +80,9 @@ void lbm_delegate::launchKernels(render_mode mode, bool barriersUpdated, unsigne
 		color<<<number_of_blocks, threads_per_block>>>(mode, array1_gpu, d_out, barrier_gpu);
 		cudaDeviceSynchronize();
 	}
+
+	cudaMemcpy(out, d_out, sizeof(unsigned char) * LATTICE_DIMENSION, cudaMemcpyDeviceToHost);
+	cudaDeviceSynchronize();
 
 	//unmap the resources for next time
 	cudaGraphicsUnmapResources(1, &cuda_pbo_resource, 0);
