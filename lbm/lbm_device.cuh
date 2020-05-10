@@ -104,32 +104,32 @@ public:
 	__device__
 	static void doLeftWall(int i, lbm_node* after, d2q9_node* d2q9)
 	{
-		after[i].direction[EAST] = d2q9[EAST].weight * (1 + _3V + _3V2);
-		after[i].direction[NORTHEAST] = d2q9[NORTHEAST].weight * (1 + _3V + _3V2);
-		after[i].direction[SOUTHEAST] = d2q9[SOUTHEAST].weight * (1 + _3V + _3V2);
+		after[i].vectors[EAST] = d2q9[EAST].weight * (1 + _3V + _3V2);
+		after[i].vectors[NORTHEAST] = d2q9[NORTHEAST].weight * (1 + _3V + _3V2);
+		after[i].vectors[SOUTHEAST] = d2q9[SOUTHEAST].weight * (1 + _3V + _3V2);
 	}
 
 	__device__
 	static void doRightWall(int i, lbm_node* after, d2q9_node* d2q9)
 	{
-		after[i].direction[WEST] = d2q9[WEST].weight * (1 - _3V + _3V2);
-		after[i].direction[NORTHWEST] = d2q9[NORTHWEST].weight * (1 - _3V + _3V2);
-		after[i].direction[SOUTHWEST] = d2q9[SOUTHWEST].weight * (1 - _3V + _3V2);
+		after[i].vectors[WEST] = d2q9[WEST].weight * (1 - _3V + _3V2);
+		after[i].vectors[NORTHWEST] = d2q9[NORTHWEST].weight * (1 - _3V + _3V2);
+		after[i].vectors[SOUTHWEST] = d2q9[SOUTHWEST].weight * (1 - _3V + _3V2);
 	}
 
 	// top and bottom walls
 	__device__
 	static void doFlanks(int i, lbm_node* after, d2q9_node* d2q9)
 	{
-		after[i].direction[NONE] = d2q9[NONE].weight * (1 - 1.5 * VELOCITY_SQUARED);
-		after[i].direction[EAST] = d2q9[EAST].weight * (1 + _3V + _3V2);
-		after[i].direction[WEST] = d2q9[WEST].weight * (1 - _3V + _3V2);
-		after[i].direction[NORTH] = d2q9[NORTH].weight * (1 - 1.5 * VELOCITY_SQUARED);
-		after[i].direction[SOUTH] = d2q9[SOUTH].weight * (1 - 1.5 * VELOCITY_SQUARED);
-		after[i].direction[NORTHEAST] = d2q9[NORTHEAST].weight * (1 + _3V + _3V2);
-		after[i].direction[SOUTHEAST] = d2q9[SOUTHEAST].weight * (1 + _3V + _3V2);
-		after[i].direction[NORTHWEST] = d2q9[NORTHWEST].weight * (1 - _3V + _3V2);
-		after[i].direction[SOUTHWEST] = d2q9[SOUTHWEST].weight * (1 - _3V + _3V2);
+		after[i].vectors[ZERO] = d2q9[ZERO].weight * (1 - 1.5 * VELOCITY_SQUARED);
+		after[i].vectors[EAST] = d2q9[EAST].weight * (1 + _3V + _3V2);
+		after[i].vectors[WEST] = d2q9[WEST].weight * (1 - _3V + _3V2);
+		after[i].vectors[NORTH] = d2q9[NORTH].weight * (1 - 1.5 * VELOCITY_SQUARED);
+		after[i].vectors[SOUTH] = d2q9[SOUTH].weight * (1 - 1.5 * VELOCITY_SQUARED);
+		after[i].vectors[NORTHEAST] = d2q9[NORTHEAST].weight * (1 + _3V + _3V2);
+		after[i].vectors[SOUTHEAST] = d2q9[SOUTHEAST].weight * (1 + _3V + _3V2);
+		after[i].vectors[NORTHWEST] = d2q9[NORTHWEST].weight * (1 - _3V + _3V2);
+		after[i].vectors[SOUTHWEST] = d2q9[SOUTHWEST].weight * (1 - _3V + _3V2);
 	}
 
 	__device__

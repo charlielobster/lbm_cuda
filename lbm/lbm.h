@@ -18,7 +18,7 @@
 #define CLIP(n) ((n) > 255 ? 255 : ((n) < 0 ? 0 : (n)))
 
 typedef enum {
-	NONE = 0,
+	ZERO = 0,
 	EAST,
 	NORTH,
 	WEST,
@@ -27,7 +27,7 @@ typedef enum {
 	NORTHWEST,
 	SOUTHWEST,
 	SOUTHEAST
-} heading;
+} lbm_vector;
 
 typedef enum {
 	CURL,
@@ -40,7 +40,7 @@ typedef struct {
 	float ux;	// x velocity
 	float uy;	// y velocity
 	float rho;	// density
-	float direction[9];
+	float vectors[9];
 } lbm_node;
 
 typedef struct {

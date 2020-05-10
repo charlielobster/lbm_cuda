@@ -86,15 +86,15 @@ void initArray1(d2q9_node* d2q9)
 		for (int y = 0; y < LATTICE_HEIGHT; y++)
 		{
 			i = INDEX(x, y);
-			array1[i].direction[NONE] = d2q9[NONE].weight * (1 - 1.5 * VELOCITY_SQUARED);
-			array1[i].direction[EAST] = d2q9[EAST].weight * (1 + _3V+ _3V2);
-			array1[i].direction[WEST] = d2q9[WEST].weight * (1 - _3V+ _3V2);
-			array1[i].direction[NORTH] = d2q9[NORTH].weight * (1 - 1.5 * VELOCITY_SQUARED);
-			array1[i].direction[SOUTH] = d2q9[SOUTH].weight * (1 - 1.5 * VELOCITY_SQUARED);
-			array1[i].direction[NORTHEAST] = d2q9[NORTHEAST].weight * (1 + _3V+ _3V2);
-			array1[i].direction[SOUTHEAST] = d2q9[SOUTHEAST].weight * (1 + _3V+ _3V2);
-			array1[i].direction[NORTHWEST] = d2q9[NORTHWEST].weight * (1 - _3V+ _3V2);
-			array1[i].direction[SOUTHWEST] = d2q9[SOUTHWEST].weight * (1 - _3V+ _3V2);
+			array1[i].vectors[ZERO] = d2q9[ZERO].weight * (1 - 1.5 * VELOCITY_SQUARED);
+			array1[i].vectors[EAST] = d2q9[EAST].weight * (1 + _3V+ _3V2);
+			array1[i].vectors[WEST] = d2q9[WEST].weight * (1 - _3V+ _3V2);
+			array1[i].vectors[NORTH] = d2q9[NORTH].weight * (1 - 1.5 * VELOCITY_SQUARED);
+			array1[i].vectors[SOUTH] = d2q9[SOUTH].weight * (1 - 1.5 * VELOCITY_SQUARED);
+			array1[i].vectors[NORTHEAST] = d2q9[NORTHEAST].weight * (1 + _3V+ _3V2);
+			array1[i].vectors[SOUTHEAST] = d2q9[SOUTHEAST].weight * (1 + _3V+ _3V2);
+			array1[i].vectors[NORTHWEST] = d2q9[NORTHWEST].weight * (1 - _3V+ _3V2);
+			array1[i].vectors[SOUTHWEST] = d2q9[SOUTHWEST].weight * (1 - _3V+ _3V2);
 			array1[i].rho = 1;
 			array1[i].ux = VELOCITY;
 			array1[i].uy = 0;

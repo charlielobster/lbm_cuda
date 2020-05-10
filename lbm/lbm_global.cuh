@@ -16,15 +16,14 @@ static void collide(d2q9_node* d2q9, lbm_node* before, lbm_node* after, unsigned
 	if (x < 0 || x >= LATTICE_WIDTH || y < 0 || y >= LATTICE_HEIGHT)
 		return;
 
-	lbm_device::macroGen(before[i].direction, &(after[i].ux), &(after[i].uy), &(after[i].rho), i);
+	lbm_device::macroGen(before[i].vectors, &(after[i].ux), &(after[i].uy), &(after[i].rho), i);
 
-	int dir = 0;
-	for (dir = 0; dir < 9; dir += 1)
+	for (int v = 0; v < 9; v += 1)
 	{
-		after[i].direction[dir] = before[i].direction[dir] + omega
-			* (lbm_device::accelGen(dir, after[i].ux, after[i].uy,
+		after[i].vectors[v] = before[i].vectors[v] + omega
+			* (lbm_device::accelGen(v, after[i].ux, after[i].uy,
 				after[i].ux * after[i].ux + after[i].uy
-				* after[i].uy, after[i].rho, d2q9) - before[i].direction[dir]);
+				* after[i].uy, after[i].rho, d2q9) - before[i].vectors[v]);
 	}
 	return;
 }
@@ -53,11 +52,10 @@ static void stream(d2q9_node* d2q9, lbm_node* before, lbm_node* after, unsigned 
 	else
 	{
 		//propagate all f values around a bit
-		int dir = 0;
-		for (dir = 0; dir < 9; dir += 1)
+		for (int v = 0; v < 9; v += 1)
 		{
-			after[INDEX(d2q9[dir].x_position + x, -d2q9[dir].y_position + y)].direction[dir] =
-				before[i].direction[dir];
+			after[INDEX(d2q9[v].x_position + x, -d2q9[v].y_position + y)].vectors[v] =
+				before[i].vectors[v];
 		}
 	}
 }
@@ -74,13 +72,12 @@ static void bounce(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
 	{
 		if (barrier[i] == 1)
 		{
-			int d;
-			for (d = 1; d < 9; d += 1)
+			for (int v = 1; v < 9; v += 1)
 			{
-				if (d2q9[d].opposite > 0 && (after[i].direction)[d] > 0)
+				if (d2q9[v].opposite > 0 && after[i].vectors[v] > 0)
 				{
-					after[INDEX(d2q9[d].x_position + x, -d2q9[d].y_position + y)].direction[d]
-						= (before[i].direction)[d2q9[d].opposite];
+					after[INDEX(d2q9[v].x_position + x, -d2q9[v].y_position + y)].vectors[v]
+						= (before[i].vectors)[d2q9[v].opposite];
 				}
 			}
 		}
