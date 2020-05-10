@@ -272,6 +272,7 @@ int main(int argc, char** argv)
 	lbm_delegate::printDeviceInfo();
 	initGLUT(&argc, argv);
 	resetLattice();
+	drawSquare();
 
 	glutMainLoop();
 
