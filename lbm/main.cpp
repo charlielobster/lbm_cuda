@@ -61,7 +61,7 @@ void drawSquare()
 	}
 }
 
-//provide LBM constants for d2q9 style nodes
+//provide LBM constants for d2q9 nodes
 //assumes positive is up and right, whereas our program assumes positive down and right.
 void initD2q9(d2q9_node* d2q9)
 {
@@ -78,7 +78,6 @@ void initD2q9(d2q9_node* d2q9)
 
 void initArray1(d2q9_node* d2q9)
 {
-	//out = (unsigned char*)calloc(LATTICE_DIMENSION, sizeof(unsigned char));
 	array1 = (lbm_node*)calloc(LATTICE_DIMENSION, sizeof(lbm_node));	
 	int i;
 	for (int x = 0; x < LATTICE_WIDTH; x++)
