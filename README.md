@@ -12,3 +12,4 @@ lbm_cuda is a Visual Studio 2019 solution created with a default CUDA 10.2 proje
 
 The lbm project is an unofficial fork of Tom Scherlis and Henry Friedlander's "Lattice Boltzmann Simulator GPU accelerated with CUDA" repository located here: https://github.com/henryfriedlander/CUDA-LBM-simulator
 
+### Run this program from a terminal in its root folder "oceanFFT" so it finds its "data" subfolder containing its shaders.
