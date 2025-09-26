@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(cuda-samples LANGUAGES C CXX CUDA)
+project(lbm_cuda LANGUAGES C CXX CUDA)
 
 find_package(CUDAToolkit REQUIRED)
 
@@ -22,4 +22,4 @@ endif()
 
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --extended-lambda")
 
-add_subdirectory(Samples)
+add_subdirectory(lbm_cuda)
