@@ -24,5 +24,7 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --extended-lambda")
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set(CMAKE_FOLDER "lbm_cuda")
 add_subdirectory(lbm_cuda)

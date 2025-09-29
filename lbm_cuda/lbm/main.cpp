@@ -1,8 +1,9 @@
 #include <malloc.h>
 
-#include <helper_gl.h>
-#include <GL/wglew.h>
+//#include <helper_gl.h>
+#include <GL/glew.h>
 #include <GL/freeglut.h>
+#include <cstdlib>
 
 #include "lbm.h"
 #include "lbm_delegate.h"
