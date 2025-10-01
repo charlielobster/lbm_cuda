@@ -20,10 +20,10 @@ int mouse_buttons = 0;
 
 bool barriersUpdated = true;
 render_mode mode = CURL;
-
+/*
 // memory pointers:
 d2q9_lbm_node* array1;
-d2q9_lbm_node* array2;
+d2q9_lbm_node* array2;*/
 unsigned char* barrier;
 unsigned char out[LATTICE_DIMENSION];
 
@@ -60,7 +60,7 @@ void drawSquare()
 		}
 	}
 }
-
+/*
 //provide LBM constants for d2q9 style nodes
 //assumes positive is up and right, whereas our program assumes positive down and right.
 void initD2q9(d2q9_position_weight* d2q9)
@@ -104,17 +104,10 @@ void initArray1(d2q9_position_weight* d2q9)
 
 void resetLattice() 
 {
-	lbm.initPboResource(pbo);
-
 	barrier = (unsigned char*)calloc(LATTICE_DIMENSION, sizeof(unsigned char));
-	array2 = (d2q9_lbm_node*)calloc(LATTICE_DIMENSION, sizeof(d2q9_lbm_node));
-
-	d2q9_position_weight* d2q9 = (d2q9_position_weight*)calloc(9, sizeof(d2q9_position_weight));
-	initD2q9(d2q9);
-	initArray1(d2q9);	
-	lbm.initCUDA(d2q9, array1, array2, barrier);
+	lbm.resetLattice(pbo, barrier);
 }
-
+*/
 //keyboard callback
 void keyboard(unsigned char a, int b, int c)
 {
@@ -141,7 +134,8 @@ void keyboard(unsigned char a, int b, int c)
 		printf("Barriers Cleared!\n");
 		break;
 	case'w':
-		resetLattice();
+		barrier = (unsigned char*)calloc(LATTICE_DIMENSION, sizeof(unsigned char));
+		lbm.resetLattice(pbo, barrier);
 		printf("Field Reset!\n");
 		break;		
 	case'd':
@@ -271,7 +265,10 @@ int main(int argc, char** argv)
 	//discover all Cuda-capable hardware
 	lbm_delegate::printDeviceInfo();
 	initGLUT(&argc, argv);
-	resetLattice();
+
+	barrier = (unsigned char*)calloc(LATTICE_DIMENSION, sizeof(unsigned char));
+	lbm.resetLattice(pbo, barrier);
+
 	drawSquare();
 
 	glutMainLoop();

@@ -7,6 +7,7 @@
 #include "lbm_delegate.h"
 #include "lbm_global.cuh"
 
+
 void lbm_delegate::printDeviceInfo()
 {
 	int nDevices = 0;
@@ -26,25 +27,6 @@ void lbm_delegate::printDeviceInfo()
 	}
 }
 
-void lbm_delegate::initPboResource(GLuint pbo)
-{
-	cudaGraphicsGLRegisterBuffer(&cuda_pbo_resource, pbo, cudaGraphicsMapFlagsWriteDiscard);
-}
-
-void lbm_delegate::initCUDA(d2q9_position_weight* d2q9, d2q9_lbm_node* array1, d2q9_lbm_node* array2, unsigned char* barrier)
-{
-	cudaError_t ce = cudaMalloc(&d2q9_gpu, 9 * sizeof(d2q9_lbm_node));
-	ce = cudaMalloc(&barrier_gpu, sizeof(unsigned char) * LATTICE_DIMENSION);
-	ce = cudaMalloc(&array1_gpu, sizeof(d2q9_lbm_node) * LATTICE_DIMENSION);
-	ce = cudaMalloc(&array2_gpu, sizeof(d2q9_lbm_node) * LATTICE_DIMENSION);
-
-	ce = cudaMemcpy(d2q9_gpu, d2q9, sizeof(d2q9_position_weight) * 9, cudaMemcpyHostToDevice);
-	ce = cudaMemcpy(barrier_gpu, barrier, sizeof(unsigned char) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
-	ce = cudaMemcpy(array1_gpu, array1, sizeof(d2q9_lbm_node) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
-	ce = cudaMemcpy(array2_gpu, array2, sizeof(d2q9_lbm_node) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
-
-	cudaDeviceSynchronize();
-}
 
 void lbm_delegate::launchKernels(render_mode mode, bool barriersUpdated, unsigned char* barrier, unsigned char* out)
 {
@@ -88,6 +70,18 @@ void lbm_delegate::launchKernels(render_mode mode, bool barriersUpdated, unsigne
 	cudaGraphicsUnmapResources(1, &cuda_pbo_resource, 0);
 }
 
+
+void lbm_delegate::resetLattice(GLuint pbo, unsigned char* barrier)
+{
+	initPboResource(pbo);
+	a2 = (d2q9_lbm_node*)calloc(LATTICE_DIMENSION, sizeof(d2q9_lbm_node));
+	d2q9_position_weight* d2q9 = (d2q9_position_weight*)calloc(9, sizeof(d2q9_position_weight));
+	initD2q9(d2q9);
+	initA1(d2q9);	
+	initCUDA(d2q9, a1, a2, barrier);	
+}
+
+
 void lbm_delegate::freeCUDA()
 {
 	cudaFree(d2q9_gpu);
@@ -95,5 +89,70 @@ void lbm_delegate::freeCUDA()
 	cudaFree(array2_gpu);
 	cudaFree(barrier_gpu);
 	cudaGraphicsUnregisterResource(cuda_pbo_resource);
+}
+
+
+void lbm_delegate::initPboResource(GLuint pbo)
+{
+	cudaGraphicsGLRegisterBuffer(&cuda_pbo_resource, pbo, cudaGraphicsMapFlagsWriteDiscard);
+}
+
+
+//provide LBM constants for d2q9 style nodes
+//assumes positive is up and right, whereas our program assumes positive down and right.
+void lbm_delegate::initD2q9(d2q9_position_weight* d2q9)
+{
+	d2q9[0].x_position = 0;		d2q9[0].y_position = 0;		d2q9[0].weight = 4.0 / 9.0;		d2q9[0].opposite = 0;
+	d2q9[1].x_position = 1;		d2q9[1].y_position = 0;		d2q9[1].weight = 1.0 / 9.0;		d2q9[1].opposite = 3;
+	d2q9[2].x_position = 0;		d2q9[2].y_position = 1;		d2q9[2].weight = 1.0 / 9.0;		d2q9[2].opposite = 4;
+	d2q9[3].x_position = -1;	d2q9[3].y_position = 0;		d2q9[3].weight = 1.0 / 9.0;		d2q9[3].opposite = 1;
+	d2q9[4].x_position = 0;		d2q9[4].y_position = -1;	d2q9[4].weight = 1.0 / 9.0;		d2q9[4].opposite = 2;
+	d2q9[5].x_position = 1;		d2q9[5].y_position = 1;		d2q9[5].weight = 1.0 / 36.0;	d2q9[5].opposite = 7;
+	d2q9[6].x_position = -1;	d2q9[6].y_position = 1;		d2q9[6].weight = 1.0 / 36.0;	d2q9[6].opposite = 8;
+	d2q9[7].x_position = -1;	d2q9[7].y_position = -1;	d2q9[7].weight = 1.0 / 36.0;	d2q9[7].opposite = 5;
+	d2q9[8].x_position = 1;		d2q9[8].y_position = -1;	d2q9[8].weight = 1.0 / 36.0;	d2q9[8].opposite = 6;
+}
+
+
+void lbm_delegate::initA1(d2q9_position_weight* d2q9)
+{
+	//out = (unsigned char*)calloc(LATTICE_DIMENSION, sizeof(unsigned char));
+	a1 = (d2q9_lbm_node*)calloc(LATTICE_DIMENSION, sizeof(d2q9_lbm_node));	
+	int i;
+	for (int x = 0; x < LATTICE_WIDTH; x++)
+	{
+		for (int y = 0; y < LATTICE_HEIGHT; y++)
+		{
+			i = INDEX(x, y);
+			a1[i].vectors[ZERO] = d2q9[ZERO].weight * (1 - 1.5 * VELOCITY_SQUARED);
+			a1[i].vectors[EAST] = d2q9[EAST].weight * (1 + _3V+ _3V2);
+			a1[i].vectors[WEST] = d2q9[WEST].weight * (1 - _3V+ _3V2);
+			a1[i].vectors[NORTH] = d2q9[NORTH].weight * (1 - 1.5 * VELOCITY_SQUARED);
+			a1[i].vectors[SOUTH] = d2q9[SOUTH].weight * (1 - 1.5 * VELOCITY_SQUARED);
+			a1[i].vectors[NORTHEAST] = d2q9[NORTHEAST].weight * (1 + _3V+ _3V2);
+			a1[i].vectors[SOUTHEAST] = d2q9[SOUTHEAST].weight * (1 + _3V+ _3V2);
+			a1[i].vectors[NORTHWEST] = d2q9[NORTHWEST].weight * (1 - _3V+ _3V2);
+			a1[i].vectors[SOUTHWEST] = d2q9[SOUTHWEST].weight * (1 - _3V+ _3V2);
+			a1[i].rho = 1;
+			a1[i].ux = VELOCITY;
+			a1[i].uy = 0;
+		}
+	}
+}
+
+
+void lbm_delegate::initCUDA(d2q9_position_weight* d2q9, d2q9_lbm_node* array1, d2q9_lbm_node* array2, unsigned char* barrier)
+{
+	cudaError_t ce = cudaMalloc(&d2q9_gpu, 9 * sizeof(d2q9_lbm_node));
+	ce = cudaMalloc(&barrier_gpu, sizeof(unsigned char) * LATTICE_DIMENSION);
+	ce = cudaMalloc(&array1_gpu, sizeof(d2q9_lbm_node) * LATTICE_DIMENSION);
+	ce = cudaMalloc(&array2_gpu, sizeof(d2q9_lbm_node) * LATTICE_DIMENSION);
+
+	ce = cudaMemcpy(d2q9_gpu, d2q9, sizeof(d2q9_position_weight) * 9, cudaMemcpyHostToDevice);
+	ce = cudaMemcpy(barrier_gpu, barrier, sizeof(unsigned char) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
+	ce = cudaMemcpy(array1_gpu, array1, sizeof(d2q9_lbm_node) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
+	ce = cudaMemcpy(array2_gpu, array2, sizeof(d2q9_lbm_node) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
+
+	cudaDeviceSynchronize();
 }
 
