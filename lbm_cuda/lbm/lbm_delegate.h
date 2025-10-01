@@ -6,6 +6,7 @@
 
 #include "lbm.h"
 
+// encapsulate the LBM details
 class lbm_delegate
 {
 public:
