@@ -1,6 +1,5 @@
 #include <malloc.h>
 
-//#include <helper_gl.h>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include <cstdlib>
@@ -23,8 +22,8 @@ bool barriersUpdated = true;
 render_mode mode = CURL;
 
 // memory pointers:
-lbm_node* array1;
-lbm_node* array2;
+d2q9_lbm_node* array1;
+d2q9_lbm_node* array2;
 unsigned char* barrier;
 unsigned char out[LATTICE_DIMENSION];
 
@@ -64,7 +63,7 @@ void drawSquare()
 
 //provide LBM constants for d2q9 style nodes
 //assumes positive is up and right, whereas our program assumes positive down and right.
-void initD2q9(d2q9_node* d2q9)
+void initD2q9(d2q9_position_weight* d2q9)
 {
 	d2q9[0].x_position = 0;		d2q9[0].y_position = 0;		d2q9[0].weight = 4.0 / 9.0;		d2q9[0].opposite = 0;
 	d2q9[1].x_position = 1;		d2q9[1].y_position = 0;		d2q9[1].weight = 1.0 / 9.0;		d2q9[1].opposite = 3;
@@ -77,10 +76,10 @@ void initD2q9(d2q9_node* d2q9)
 	d2q9[8].x_position = 1;		d2q9[8].y_position = -1;	d2q9[8].weight = 1.0 / 36.0;	d2q9[8].opposite = 6;
 }
 
-void initArray1(d2q9_node* d2q9)
+void initArray1(d2q9_position_weight* d2q9)
 {
 	//out = (unsigned char*)calloc(LATTICE_DIMENSION, sizeof(unsigned char));
-	array1 = (lbm_node*)calloc(LATTICE_DIMENSION, sizeof(lbm_node));	
+	array1 = (d2q9_lbm_node*)calloc(LATTICE_DIMENSION, sizeof(d2q9_lbm_node));	
 	int i;
 	for (int x = 0; x < LATTICE_WIDTH; x++)
 	{
@@ -108,9 +107,9 @@ void resetLattice()
 	lbm.initPboResource(pbo);
 
 	barrier = (unsigned char*)calloc(LATTICE_DIMENSION, sizeof(unsigned char));
-	array2 = (lbm_node*)calloc(LATTICE_DIMENSION, sizeof(lbm_node));
+	array2 = (d2q9_lbm_node*)calloc(LATTICE_DIMENSION, sizeof(d2q9_lbm_node));
 
-	d2q9_node* d2q9 = (d2q9_node*)calloc(9, sizeof(d2q9_node));
+	d2q9_position_weight* d2q9 = (d2q9_position_weight*)calloc(9, sizeof(d2q9_position_weight));
 	initD2q9(d2q9);
 	initArray1(d2q9);	
 	lbm.initCUDA(d2q9, array1, array2, barrier);

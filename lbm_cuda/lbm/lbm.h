@@ -1,8 +1,6 @@
 #ifndef _LBM_H_
 #define _LBM_H_
 
-#include <cuda_runtime.h>
-
 #define VISCOSITY 0.005
 #define CONTRAST 75
 #define VELOCITY 0.1
@@ -27,7 +25,7 @@ typedef enum {
 	NORTHWEST,
 	SOUTHWEST,
 	SOUTHEAST
-} lbm_vector;
+} d2q9_vector;
 
 typedef enum {
 	CURL,
@@ -41,13 +39,13 @@ typedef struct {
 	float uy;	// y velocity
 	float rho;	// density
 	float vectors[9];
-} lbm_node;
+} d2q9_lbm_node;
 
 typedef struct {
 	char x_position;			
 	char y_position;
 	float weight;
 	unsigned char opposite;
-} d2q9_node;
+} d2q9_position_weight;
 
 #endif

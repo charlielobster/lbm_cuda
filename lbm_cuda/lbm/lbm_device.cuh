@@ -29,14 +29,14 @@ public:
 	}
 
 	__device__
-	static float computeCurlMiddleCase(int x, int y, lbm_node* array1)
+	static float computeCurlMiddleCase(int x, int y, d2q9_lbm_node* array1)
 	{
 		return (array1[INDEX(x, y + 1)].ux - array1[INDEX(x, y - 1)].ux)
 			- (array1[INDEX(x + 1, y)].uy - array1[INDEX(x - 1, y)].uy);
 	}
 
 	__device__
-	static uchar4 getRgbCurl(int x, int y, lbm_node* array)
+	static uchar4 getRgbCurl(int x, int y, d2q9_lbm_node* array)
 	{
 		int i = INDEX(x, y);
 		uchar4 val;
@@ -93,7 +93,7 @@ public:
 
 	// return acceleration
 	__device__
-	static float accelGen(int node_num, float ux, float uy, float u2, float rho, d2q9_node* d2q9)
+	static float accelGen(int node_num, float ux, float uy, float u2, float rho, d2q9_position_weight* d2q9)
 	{
 		float u_direct = ux * d2q9[node_num].x_position + uy * (-d2q9[node_num].y_position);
 		float unweighted = 1 + 3 * u_direct + 4.5 * u_direct * u_direct - 1.5 * u2;
@@ -102,7 +102,7 @@ public:
 	}
 
 	__device__
-	static void doLeftWall(int i, lbm_node* after, d2q9_node* d2q9)
+	static void doLeftWall(int i, d2q9_lbm_node* after, d2q9_position_weight* d2q9)
 	{
 		after[i].vectors[EAST] = d2q9[EAST].weight * (1 + _3V + _3V2);
 		after[i].vectors[NORTHEAST] = d2q9[NORTHEAST].weight * (1 + _3V + _3V2);
@@ -110,7 +110,7 @@ public:
 	}
 
 	__device__
-	static void doRightWall(int i, lbm_node* after, d2q9_node* d2q9)
+	static void doRightWall(int i, d2q9_lbm_node* after, d2q9_position_weight* d2q9)
 	{
 		after[i].vectors[WEST] = d2q9[WEST].weight * (1 - _3V + _3V2);
 		after[i].vectors[NORTHWEST] = d2q9[NORTHWEST].weight * (1 - _3V + _3V2);
@@ -119,7 +119,7 @@ public:
 
 	// top and bottom walls
 	__device__
-	static void doFlanks(int i, lbm_node* after, d2q9_node* d2q9)
+	static void doFlanks(int i, d2q9_lbm_node* after, d2q9_position_weight* d2q9)
 	{
 		after[i].vectors[ZERO] = d2q9[ZERO].weight * (1 - 1.5 * VELOCITY_SQUARED);
 		after[i].vectors[EAST] = d2q9[EAST].weight * (1 + _3V + _3V2);
@@ -133,7 +133,7 @@ public:
 	}
 
 	__device__
-	static void streamEdgeCases(int x, int y, lbm_node* after, unsigned char* barrier, d2q9_node* d2q9)
+	static void streamEdgeCases(int x, int y, d2q9_lbm_node* after, unsigned char* barrier, d2q9_position_weight* d2q9)
 	{
 		int i = INDEX(x, y);
 		if (x == 0)

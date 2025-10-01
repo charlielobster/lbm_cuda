@@ -4,7 +4,7 @@
 #include "lbm_device.cuh"
 
 __global__
-static void collide(d2q9_node* d2q9, lbm_node* before, lbm_node* after, unsigned char* barrier)
+static void collide(d2q9_position_weight* d2q9, d2q9_lbm_node* before, d2q9_lbm_node* after, unsigned char* barrier)
 {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -30,7 +30,7 @@ static void collide(d2q9_node* d2q9, lbm_node* before, lbm_node* after, unsigned
 
 //stream: handle particle propagation, ignoring edge cases.
 __global__
-static void stream(d2q9_node* d2q9, lbm_node* before, lbm_node* after, unsigned char* barrier)
+static void stream(d2q9_position_weight* d2q9, d2q9_lbm_node* before, d2q9_lbm_node* after, unsigned char* barrier)
 {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -61,7 +61,7 @@ static void stream(d2q9_node* d2q9, lbm_node* before, lbm_node* after, unsigned 
 }
 
 __global__
-static void bounce(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
+static void bounce(d2q9_position_weight* d2q9, d2q9_lbm_node* before, d2q9_lbm_node* after,
 		unsigned char* barrier, uchar4* image)
 {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -85,7 +85,7 @@ static void bounce(d2q9_node* d2q9, lbm_node* before, lbm_node* after,
 }
 
 __global__
-static void color(render_mode mode, lbm_node* array, uchar4* image, unsigned char* barrier)
+static void color(render_mode mode, d2q9_lbm_node* array, uchar4* image, unsigned char* barrier)
 {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;

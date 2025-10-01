@@ -31,17 +31,17 @@ void lbm_delegate::initPboResource(GLuint pbo)
 	cudaGraphicsGLRegisterBuffer(&cuda_pbo_resource, pbo, cudaGraphicsMapFlagsWriteDiscard);
 }
 
-void lbm_delegate::initCUDA(d2q9_node * d2q9, lbm_node* array1, lbm_node* array2, unsigned char* barrier)
+void lbm_delegate::initCUDA(d2q9_position_weight* d2q9, d2q9_lbm_node* array1, d2q9_lbm_node* array2, unsigned char* barrier)
 {
-	cudaError_t ce = cudaMalloc(&d2q9_gpu, 9 * sizeof(d2q9_node));
+	cudaError_t ce = cudaMalloc(&d2q9_gpu, 9 * sizeof(d2q9_lbm_node));
 	ce = cudaMalloc(&barrier_gpu, sizeof(unsigned char) * LATTICE_DIMENSION);
-	ce = cudaMalloc(&array1_gpu, sizeof(lbm_node) * LATTICE_DIMENSION);
-	ce = cudaMalloc(&array2_gpu, sizeof(lbm_node) * LATTICE_DIMENSION);
+	ce = cudaMalloc(&array1_gpu, sizeof(d2q9_lbm_node) * LATTICE_DIMENSION);
+	ce = cudaMalloc(&array2_gpu, sizeof(d2q9_lbm_node) * LATTICE_DIMENSION);
 
-	ce = cudaMemcpy(d2q9_gpu, d2q9, sizeof(d2q9_node) * 9, cudaMemcpyHostToDevice);
+	ce = cudaMemcpy(d2q9_gpu, d2q9, sizeof(d2q9_position_weight) * 9, cudaMemcpyHostToDevice);
 	ce = cudaMemcpy(barrier_gpu, barrier, sizeof(unsigned char) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
-	ce = cudaMemcpy(array1_gpu, array1, sizeof(lbm_node) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
-	ce = cudaMemcpy(array2_gpu, array2, sizeof(lbm_node) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
+	ce = cudaMemcpy(array1_gpu, array1, sizeof(d2q9_lbm_node) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
+	ce = cudaMemcpy(array2_gpu, array2, sizeof(d2q9_lbm_node) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
 
 	cudaDeviceSynchronize();
 }
