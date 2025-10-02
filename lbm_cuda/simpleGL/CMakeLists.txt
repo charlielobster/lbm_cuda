@@ -37,7 +37,7 @@ if(${OpenGL_FOUND})
 
         target_compile_features(simpleGL PRIVATE cxx_std_17 cuda_std_17)
 
-        set_target_properties(simpleGL PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+        set_target_properties(simpleGL PROPERTIES CUDA_SEPARABLE_COMPILATION OFF)
 
         target_include_directories(simpleGL PUBLIC
             ${OPENGL_INCLUDE_DIR}
