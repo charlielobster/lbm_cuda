@@ -7,7 +7,6 @@
 #include "lbm_delegate.h"
 #include "d2q9_global.cuh"
 
-
 void lbm_delegate::printDeviceInfo()
 {
 	int nDevices = 0;
@@ -26,7 +25,6 @@ void lbm_delegate::printDeviceInfo()
 		if (ce != cudaSuccess) { printf("error: %s\n", cudaGetErrorString(ce)); }
 	}
 }
-
 
 void lbm_delegate::launchKernels(render_mode mode, bool barriersUpdated, unsigned char* barrier, unsigned char* out)
 {
@@ -70,7 +68,6 @@ void lbm_delegate::launchKernels(render_mode mode, bool barriersUpdated, unsigne
 	cudaGraphicsUnmapResources(1, &cuda_pbo_resource, 0);
 }
 
-
 void lbm_delegate::resetLattice(GLuint pbo, unsigned char* barrier)
 {
 	initPboResource(pbo);
@@ -81,7 +78,6 @@ void lbm_delegate::resetLattice(GLuint pbo, unsigned char* barrier)
 	initCUDA(d2q9, a1, a2, barrier);	
 }
 
-
 void lbm_delegate::freeCUDA()
 {
 	cudaFree(d2q9_gpu);
@@ -91,12 +87,10 @@ void lbm_delegate::freeCUDA()
 	cudaGraphicsUnregisterResource(cuda_pbo_resource);
 }
 
-
 void lbm_delegate::initPboResource(GLuint pbo)
 {
 	cudaGraphicsGLRegisterBuffer(&cuda_pbo_resource, pbo, cudaGraphicsMapFlagsWriteDiscard);
 }
-
 
 //provide LBM constants for d2q9 style nodes
 //assumes positive is up and right, whereas our program assumes positive down and right.
@@ -112,7 +106,6 @@ void lbm_delegate::initD2q9(d2q9_position_weight* d2q9)
 	d2q9[7].x_position = -1;	d2q9[7].y_position = -1;	d2q9[7].weight = 1.0 / 36.0;	d2q9[7].opposite = 5;
 	d2q9[8].x_position = 1;		d2q9[8].y_position = -1;	d2q9[8].weight = 1.0 / 36.0;	d2q9[8].opposite = 6;
 }
-
 
 void lbm_delegate::initA1(d2q9_position_weight* d2q9)
 {
@@ -139,7 +132,6 @@ void lbm_delegate::initA1(d2q9_position_weight* d2q9)
 		}
 	}
 }
-
 
 void lbm_delegate::initCUDA(d2q9_position_weight* d2q9, d2q9_lbm_node* array1, d2q9_lbm_node* array2, unsigned char* barrier)
 {
