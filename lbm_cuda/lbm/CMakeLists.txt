@@ -30,7 +30,7 @@ if(${OpenGL_FOUND})
     if (${GLUT_FOUND})
         if (${GLEW_FOUND})
             # Add target for lbm
-            add_executable(lbm lbm_delegate.cu main.cpp)
+            add_executable(lbm d2q9_delegate.cu main.cpp)
 
             target_compile_options(lbm PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--extended-lambda>)
 

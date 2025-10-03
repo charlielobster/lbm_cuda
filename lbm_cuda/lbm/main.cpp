@@ -5,7 +5,7 @@
 #include <cstdlib>
 
 #include "lbm.h"
-#include "lbm_delegate.h"
+#include "d2q9_delegate.h"
 
 // texture and pixel objects
 GLuint pbo = 0;     // OpenGL pixel buffer object
@@ -27,7 +27,7 @@ unsigned char out[LATTICE_DIMENSION];
 
 int current_button = GLUT_LEFT_BUTTON; 
 
-lbm_delegate lbm; // encapsulate LBM-related activity
+lbm_delegate* lbm = new d2q9_delegate(); // encapsulate LBM-related activity
 
 void clearBarriers()
 {
@@ -87,7 +87,7 @@ void keyboard(unsigned char a, int b, int c)
 		break;
 	case'w':
 		barrier = (unsigned char*)calloc(LATTICE_DIMENSION, sizeof(unsigned char));
-		lbm.resetLattice(pbo, barrier);
+		lbm->resetLattice(pbo, barrier);
 		printf("Field Reset!\n");
 		break;		
 	case'd':
@@ -107,7 +107,7 @@ void exitFunc()
 {
 	glDeleteBuffers(1, &pbo);
 	glDeleteTextures(1, &tex);
-	lbm.freeCUDA();
+	lbm->freeCUDA();
 }
 
 void mouse(int button, int state, int x, int y)
@@ -158,7 +158,7 @@ void display()
 	glRotatef(rotate_x, 1.0, 0.0, 0.0);
 	glRotatef(rotate_y, 0.0, 1.0, 0.0);
 
-	lbm.launchKernels(mode, barriersUpdated, barrier, out);
+	lbm->launchKernels(mode, barriersUpdated, barrier, out);
 	barriersUpdated = false;
 
 	glEnable(GL_TEXTURE_2D);
@@ -212,14 +212,34 @@ void initGLUT(int* argc, char** argv)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 }
 
+void printDeviceInfo()
+{
+	int nDevices = 0;
+	cudaError_t ce = cudaGetDeviceCount(&nDevices);
+	cudaDeviceProp prop;
+	for (int i = 0; i < nDevices; ++i)
+	{
+		ce = cudaGetDeviceProperties(&prop, i);
+		printf("Device number: %d\n", i);
+		printf("Device name: %s\n", prop.name);
+		printf("Compute capability: %d.%d\n", prop.major, prop.minor);
+		printf("Max threads per block: %d\n", prop.maxThreadsPerBlock);
+		printf("Max threads in X-dimension of block: %d\n", prop.maxThreadsDim[0]);
+		printf("Max threads in Y-dimension of block: %d\n", prop.maxThreadsDim[1]);
+		printf("Max threads in Z-dimension of block: %d\n\n", prop.maxThreadsDim[2]);
+		if (ce != cudaSuccess) { printf("error: %s\n", cudaGetErrorString(ce)); }
+	}
+}
+
 int main(int argc, char** argv) 
 {
 	//discover all Cuda-capable hardware
-	lbm_delegate::printDeviceInfo();
+	printDeviceInfo();
+
 	initGLUT(&argc, argv);
 
 	barrier = (unsigned char*)calloc(LATTICE_DIMENSION, sizeof(unsigned char));
-	lbm.resetLattice(pbo, barrier);
+	lbm->resetLattice(pbo, barrier);
 
 	drawSquare();
 
