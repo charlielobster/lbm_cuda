@@ -1,3 +1,4 @@
+/*
 #ifndef _D2Q9_DELEGATE_H_
 #define _D2Q9_DELEGATE_H_
 
@@ -31,3 +32,4 @@ private:
 };
 
 #endif
+*/
