@@ -4,6 +4,7 @@
 #include <cuda_runtime.h>
 #include <GL/freeglut.h>
 
+#include "d2q9.h"
 #include "lbm.h"
 
 // encapsulate the LBM details

@@ -5,7 +5,7 @@
 #include <helper_cuda.h>
 
 #include "lbm_delegate.h"
-#include "lbm_global.cuh"
+#include "d2q9_global.cuh"
 
 
 void lbm_delegate::printDeviceInfo()
@@ -50,16 +50,16 @@ void lbm_delegate::launchKernels(render_mode mode, bool barriersUpdated, unsigne
 		dim3 threads_per_block = dim3(32, 32, 1);
 		dim3 number_of_blocks = dim3(LATTICE_WIDTH / 32 + 1, LATTICE_HEIGHT / 32 + 1, 1);
 
-		collide<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, array1_gpu, array2_gpu, barrier_gpu);
+		d2q9_global::collide<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, array1_gpu, array2_gpu, barrier_gpu);
 		cudaDeviceSynchronize();
 
-		stream<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, array2_gpu, array1_gpu, barrier_gpu);
+		d2q9_global::stream<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, array2_gpu, array1_gpu, barrier_gpu);
 		cudaDeviceSynchronize();
 
-		bounce<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, array2_gpu, array1_gpu, barrier_gpu, d_out);
+		d2q9_global::bounce<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, array2_gpu, array1_gpu, barrier_gpu, d_out);
 		cudaDeviceSynchronize();	
 
-		color<<<number_of_blocks, threads_per_block>>>(mode, array1_gpu, d_out, barrier_gpu);
+		d2q9_global::color<<<number_of_blocks, threads_per_block>>>(mode, array1_gpu, d_out, barrier_gpu);
 		cudaDeviceSynchronize();
 	}
 
