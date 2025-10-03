@@ -16,10 +16,36 @@
 #define CLIP(n) ((n) > 255 ? 255 : ((n) < 0 ? 0 : (n)))
 
 typedef enum {
+	ZERO = 0,
+	EAST,
+	NORTH,
+	WEST,
+	SOUTH,
+	NORTHEAST,
+	NORTHWEST,
+	SOUTHWEST,
+	SOUTHEAST
+} d2q9_vector;
+
+typedef enum {
 	CURL,
 	SPEED,
 	UX,
 	UY
 } render_mode;
+
+typedef struct {
+	float ux;	// x velocity
+	float uy;	// y velocity
+	float rho;	// density
+	float vectors[9];
+} d2q9_lbm_node;
+
+typedef struct {
+	char x_position;			
+	char y_position;
+	float weight;
+	unsigned char opposite;
+} d2q9_position_weight;
 
 #endif

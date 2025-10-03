@@ -5,7 +5,7 @@
 #include <helper_cuda.h>
 
 #include "lbm_delegate.h"
-#include "d2q9_global.cuh"
+#include "lbm_global.cuh"
 
 
 void lbm_delegate::printDeviceInfo()
