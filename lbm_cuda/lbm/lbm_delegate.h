@@ -4,7 +4,19 @@
 #include <cuda_runtime.h>
 #include <GL/freeglut.h>
 
-#include "lbm.h"
+#define LATTICE_WIDTH 256
+#define LATTICE_HEIGHT 128
+//#define LATTICE_DEPTH 64
+#define LATTICE_DIMENSION 32768
+#define INDEX(x, y) ((x) + (y) * LATTICE_WIDTH)
+#define CLIP(n) ((n) > 255 ? 255 : ((n) < 0 ? 0 : (n)))
+
+typedef enum {
+	CURL,
+	SPEED,
+	UX,
+	UY
+} render_mode;
 
 class lbm_delegate
 {

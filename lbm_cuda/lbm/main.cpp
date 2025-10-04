@@ -4,7 +4,6 @@
 #include <GL/freeglut.h>
 #include <cstdlib>
 
-#include "lbm.h"
 #include "d2q9_delegate.h"
 
 // texture and pixel objects
@@ -83,12 +82,12 @@ void keyboard(unsigned char a, int b, int c)
 		break;
 	case'q':
 		clearBarriers();
-		printf("Barriers Cleared!\n");
+		printf("Barriers cleared\n");
 		break;
 	case'w':
 		barrier = (unsigned char*)calloc(LATTICE_DIMENSION, sizeof(unsigned char));
 		lbm->resetLattice(pbo, barrier);
-		printf("Field Reset!\n");
+		printf("Field reset\n");
 		break;		
 	case'd':
 		clearBarriers();
@@ -229,6 +228,7 @@ void printDeviceInfo()
 		printf("Max threads in Z-dimension of block: %d\n\n", prop.maxThreadsDim[2]);
 		if (ce != cudaSuccess) { printf("error: %s\n", cudaGetErrorString(ce)); }
 	}
+	printf("%.2f %.2f\n", 3e-1, 3e-2);
 }
 
 int main(int argc, char** argv) 

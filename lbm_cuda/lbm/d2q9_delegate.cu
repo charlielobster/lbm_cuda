@@ -6,6 +6,14 @@
 
 #include "d2q9_delegate.h"
 
+#define VISCOSITY 0.005
+#define CONTRAST 75
+#define VELOCITY 0.1
+#define VELOCITY_SQUARED 0.01
+#define _3V 0.3
+#define _3V2 0.03
+#define STEPS_PER_RENDER 10
+
 __device__
 static uchar4 getRgbU(float i)
 {
