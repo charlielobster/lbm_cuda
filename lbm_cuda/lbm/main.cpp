@@ -27,7 +27,7 @@ unsigned char out[LATTICE_DIMENSION];
 
 int current_button = GLUT_LEFT_BUTTON; 
 
-lbm_delegate* lbm = new d2q9_delegate(); // encapsulate LBM-related activity
+lbm_delegate* lbm = new d2q9_delegate(); // encapsulate LBM-related activities
 
 void clearBarriers()
 {
