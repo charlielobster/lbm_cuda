@@ -91,15 +91,12 @@ void d2q9_delegate::launchKernels(lbm_render_mode mode)
 		d2q9_stream<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, array2_gpu, array1_gpu, barrier_gpu);
 		cudaDeviceSynchronize();
 
-		d2q9_bounce<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, array2_gpu, array1_gpu, barrier_gpu, d_out);
+		d2q9_bounce<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, array2_gpu, array1_gpu, barrier_gpu);
 		cudaDeviceSynchronize();	
 
-		color<<<number_of_blocks, threads_per_block>>>(mode, array1_gpu, d_out, barrier_gpu);
+		d2q9_color<<<number_of_blocks, threads_per_block>>>(mode, array1_gpu, d_out, barrier_gpu);
 		cudaDeviceSynchronize();
 	}
-
-	cudaMemcpy(out, d_out, sizeof(unsigned char) * LATTICE_DIMENSION, cudaMemcpyDeviceToHost);
-	cudaDeviceSynchronize();
 
 	//unmap the resources for next time
 	cudaGraphicsUnmapResources(1, &cuda_pbo_resource, 0);

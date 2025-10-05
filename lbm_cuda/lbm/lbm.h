@@ -1,0 +1,9 @@
+#ifndef _LBM_H_
+#define _LBM_H_
+
+#define LATTICE_WIDTH 256
+#define LATTICE_HEIGHT 128
+#define LATTICE_DEPTH 1
+#define LATTICE_DIMENSION ((LATTICE_WIDTH) * (LATTICE_HEIGHT) * (LATTICE_DEPTH))
+
+#endif
