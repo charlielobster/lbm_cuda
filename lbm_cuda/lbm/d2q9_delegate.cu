@@ -7,7 +7,7 @@
 #include "d2q9_delegate.h"
 #include "d2q9_global.cuh"
 
-void d2q9_delegate::launchKernels(render_mode mode, bool barriersUpdated, unsigned char* barrier, unsigned char* out)
+void d2q9_delegate::launchKernels(lbm_render_mode mode, unsigned char* out)
 {
 	//reset image pointer
 	uchar4* d_out = 0;
@@ -19,7 +19,7 @@ void d2q9_delegate::launchKernels(render_mode mode, bool barriersUpdated, unsign
 	//launch cuda kernels to calculate LBM step
 	for (int i = 0; i < 10; i++)
 	{
-		if (barriersUpdated)
+		if (barrierUpdated)
 		{
 			cudaMemcpy(barrier_gpu, barrier, sizeof(unsigned char) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
 			cudaDeviceSynchronize(); // Wait for the GPU to finish
@@ -47,10 +47,13 @@ void d2q9_delegate::launchKernels(render_mode mode, bool barriersUpdated, unsign
 
 	//unmap the resources for next time
 	cudaGraphicsUnmapResources(1, &cuda_pbo_resource, 0);
+	barrierUpdated = false;
 }
 
-void d2q9_delegate::resetLattice(GLuint pbo, unsigned char* barrier)
+void d2q9_delegate::resetLattice(GLuint pbo)
 {
+	barrier = (unsigned char*)calloc(LATTICE_DIMENSION, sizeof(unsigned char));
+
 	cudaGraphicsGLRegisterBuffer(&cuda_pbo_resource, pbo, cudaGraphicsMapFlagsWriteDiscard);
 
 	array2 = (d2q9_lbm_node*)calloc(LATTICE_DIMENSION, sizeof(d2q9_lbm_node));
@@ -101,6 +104,40 @@ void d2q9_delegate::resetLattice(GLuint pbo, unsigned char* barrier)
 	ce = cudaMemcpy(array2_gpu, array2, sizeof(d2q9_lbm_node) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
 
 	cudaDeviceSynchronize();
+}
+
+void d2q9_delegate::clearBarrier()
+{
+	for (int i = 0; i < LATTICE_WIDTH; i++)
+	{
+		for (int j = 0; j < LATTICE_HEIGHT; j++)
+		{
+			barrier[INDEX(i, j)] = 0;
+		}
+	}
+	barrierUpdated = true;
+}
+
+void d2q9_delegate::drawLineDiagonal()
+{
+	clearBarrier();
+	for (int i = 0; i < LATTICE_HEIGHT / 4; i++)
+	{
+
+		barrier[INDEX((LATTICE_WIDTH / 3) + (i / 3), LATTICE_HEIGHT / 3 + i)] = 1;
+	}
+}
+
+void d2q9_delegate::drawSquare()
+{
+	clearBarrier();
+	for (int i = 0; i < LATTICE_HEIGHT / 4; i++)
+	{
+		for (int j = 0; j < LATTICE_HEIGHT / 4; j++)
+		{
+			barrier[INDEX(i + LATTICE_WIDTH / 3, j + LATTICE_HEIGHT * 3 / 8)] = 1;
+		}
+	}
 }
 
 void d2q9_delegate::freeCUDA()

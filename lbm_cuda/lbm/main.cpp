@@ -1,5 +1,7 @@
-#include <malloc.h>
+// main.cpp
+// OpenGL boilerplate
 
+#include <malloc.h>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include <cstdlib>
@@ -10,54 +12,20 @@
 GLuint pbo = 0;     // OpenGL pixel buffer object
 GLuint tex = 0;     // OpenGL texture object
 
+// mouse state & UI flags
 float rotate_x = 0.0;
 float rotate_y = 0.0;
 float translate_z = -2.0;
 int previous_mouse_x;
 int previous_mouse_y;
 int mouse_buttons = 0;
-
-bool barriersUpdated = true;
-render_mode mode = CURL;
-
-// memory pointers:
-unsigned char* barrier;
-unsigned char out[LATTICE_DIMENSION];
-
+lbm_render_mode mode = CURL;
 int current_button = GLUT_LEFT_BUTTON; 
 
+// memory pointers:
+unsigned char out[LATTICE_DIMENSION];
+
 lbm_delegate* lbm = new d2q9_delegate(); // encapsulate LBM-related activities
-
-void clearBarriers()
-{
-	for (int i = 0; i < LATTICE_WIDTH; i++)
-	{
-		for (int j = 0; j < LATTICE_HEIGHT; j++)
-		{
-			barrier[INDEX(i, j)] = 0;
-		}
-	}
-}
-
-void drawLineDiagonal()
-{
-	for (int i = 0; i < LATTICE_HEIGHT / 4; i++)
-	{
-
-		barrier[INDEX((LATTICE_WIDTH / 3) + (i / 3), LATTICE_HEIGHT / 3 + i)] = 1;
-	}
-}
-
-void drawSquare()
-{
-	for (int i = 0; i < LATTICE_HEIGHT / 4; i++)
-	{
-		for (int j = 0; j < LATTICE_HEIGHT / 4; j++)
-		{
-			barrier[INDEX(i + LATTICE_WIDTH / 3, j + LATTICE_HEIGHT * 3 / 8)] = 1;
-		}
-	}
-}
 
 //keyboard callback
 void keyboard(unsigned char a, int b, int c)
@@ -81,25 +49,21 @@ void keyboard(unsigned char a, int b, int c)
 		printf("render mode set to Uy\n");
 		break;
 	case'q':
-		clearBarriers();
-		printf("Barriers cleared\n");
+		lbm->clearBarrier();
+		printf("Barrier cleared\n");
 		break;
 	case'w':
-		barrier = (unsigned char*)calloc(LATTICE_DIMENSION, sizeof(unsigned char));
-		lbm->resetLattice(pbo, barrier);
+		lbm->resetLattice(pbo);
 		printf("Field reset\n");
 		break;		
 	case'd':
-		clearBarriers();
-		drawLineDiagonal();
+		lbm->drawLineDiagonal();
 		break;
 	case'f':
-		clearBarriers();
-		drawSquare();
+		lbm->drawSquare();
 		break;
 	default: break;
 	}
-	barriersUpdated = true;
 }
 
 void exitFunc()
@@ -157,8 +121,7 @@ void display()
 	glRotatef(rotate_x, 1.0, 0.0, 0.0);
 	glRotatef(rotate_y, 0.0, 1.0, 0.0);
 
-	lbm->launchKernels(mode, barriersUpdated, barrier, out);
-	barriersUpdated = false;
+	lbm->launchKernels(mode, out);
 
 	glEnable(GL_TEXTURE_2D);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
@@ -211,6 +174,7 @@ void initGLUT(int* argc, char** argv)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 }
 
+//discover all Cuda-capable hardware
 void printDeviceInfo()
 {
 	int nDevices = 0;
@@ -232,15 +196,12 @@ void printDeviceInfo()
 
 int main(int argc, char** argv) 
 {
-	//discover all Cuda-capable hardware
 	printDeviceInfo();
 
 	initGLUT(&argc, argv);
 
-	barrier = (unsigned char*)calloc(LATTICE_DIMENSION, sizeof(unsigned char));
-	lbm->resetLattice(pbo, barrier);
-
-	drawSquare();
+	lbm->resetLattice(pbo);
+	lbm->drawSquare();
 
 	glutMainLoop();
 
