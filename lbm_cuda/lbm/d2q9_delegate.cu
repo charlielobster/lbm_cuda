@@ -7,49 +7,6 @@
 #include "d2q9_delegate.h"
 #include "d2q9_global.cuh"
 
-void d2q9_delegate::launchKernels(lbm_render_mode mode, unsigned char* out)
-{
-	//reset image pointer
-	uchar4* d_out = 0;
-
-	//set d_out as a texture memory pointer
-	cudaGraphicsMapResources(1, &cuda_pbo_resource, 0);
-	cudaGraphicsResourceGetMappedPointer((void**)&d_out, NULL, cuda_pbo_resource);
-
-	//launch cuda kernels to calculate LBM step
-	for (int i = 0; i < 10; i++)
-	{
-		if (barrierUpdated)
-		{
-			cudaMemcpy(barrier_gpu, barrier, sizeof(unsigned char) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
-			cudaDeviceSynchronize(); // Wait for the GPU to finish
-		}
-
-		//determine number of threads and blocks required
-		dim3 threads_per_block = dim3(32, 32, 1);
-		dim3 number_of_blocks = dim3(LATTICE_WIDTH / 32 + 1, LATTICE_HEIGHT / 32 + 1, 1);
-
-		d2q9_collide<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, array1_gpu, array2_gpu, barrier_gpu);
-		cudaDeviceSynchronize();
-
-		d2q9_stream<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, array2_gpu, array1_gpu, barrier_gpu);
-		cudaDeviceSynchronize();
-
-		d2q9_bounce<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, array2_gpu, array1_gpu, barrier_gpu, d_out);
-		cudaDeviceSynchronize();	
-
-		color<<<number_of_blocks, threads_per_block>>>(mode, array1_gpu, d_out, barrier_gpu);
-		cudaDeviceSynchronize();
-	}
-
-	cudaMemcpy(out, d_out, sizeof(unsigned char) * LATTICE_DIMENSION, cudaMemcpyDeviceToHost);
-	cudaDeviceSynchronize();
-
-	//unmap the resources for next time
-	cudaGraphicsUnmapResources(1, &cuda_pbo_resource, 0);
-	barrierUpdated = false;
-}
-
 void d2q9_delegate::resetLattice(GLuint pbo)
 {
 	barrier = (unsigned char*)calloc(LATTICE_DIMENSION, sizeof(unsigned char));
@@ -104,6 +61,49 @@ void d2q9_delegate::resetLattice(GLuint pbo)
 	ce = cudaMemcpy(array2_gpu, array2, sizeof(d2q9_lbm_node) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
 
 	cudaDeviceSynchronize();
+}
+
+void d2q9_delegate::launchKernels(lbm_render_mode mode, unsigned char* out)
+{
+	//reset image pointer
+	uchar4* d_out = 0;
+
+	//set d_out as a texture memory pointer
+	cudaGraphicsMapResources(1, &cuda_pbo_resource, 0);
+	cudaGraphicsResourceGetMappedPointer((void**)&d_out, NULL, cuda_pbo_resource);
+
+	//launch cuda kernels to calculate LBM step
+	for (int i = 0; i < 10; i++)
+	{
+		if (barrierUpdated)
+		{
+			cudaMemcpy(barrier_gpu, barrier, sizeof(unsigned char) * LATTICE_DIMENSION, cudaMemcpyHostToDevice);
+			cudaDeviceSynchronize(); // Wait for the GPU to finish
+		}
+
+		//determine number of threads and blocks required
+		dim3 threads_per_block = dim3(32, 32, 1);
+		dim3 number_of_blocks = dim3(LATTICE_WIDTH / 32 + 1, LATTICE_HEIGHT / 32 + 1, 1);
+
+		d2q9_collide<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, array1_gpu, array2_gpu, barrier_gpu);
+		cudaDeviceSynchronize();
+
+		d2q9_stream<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, array2_gpu, array1_gpu, barrier_gpu);
+		cudaDeviceSynchronize();
+
+		d2q9_bounce<<<number_of_blocks, threads_per_block>>>(d2q9_gpu, array2_gpu, array1_gpu, barrier_gpu, d_out);
+		cudaDeviceSynchronize();	
+
+		color<<<number_of_blocks, threads_per_block>>>(mode, array1_gpu, d_out, barrier_gpu);
+		cudaDeviceSynchronize();
+	}
+
+	cudaMemcpy(out, d_out, sizeof(unsigned char) * LATTICE_DIMENSION, cudaMemcpyDeviceToHost);
+	cudaDeviceSynchronize();
+
+	//unmap the resources for next time
+	cudaGraphicsUnmapResources(1, &cuda_pbo_resource, 0);
+	barrierUpdated = false;
 }
 
 void d2q9_delegate::clearBarrier()
