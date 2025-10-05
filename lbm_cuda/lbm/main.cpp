@@ -19,13 +19,11 @@ float translate_z = -2.0;
 int previous_mouse_x;
 int previous_mouse_y;
 int mouse_buttons = 0;
-lbm_render_mode mode = CURL;
 int current_button = GLUT_LEFT_BUTTON; 
 
-// memory pointers:
-unsigned char out[LATTICE_DIMENSION];
-
-lbm_delegate* lbm = new d2q9_delegate(); // encapsulate LBM-related activities
+// encapsulate LBM-related activities
+lbm_delegate* lbm = new d2q9_delegate(); 
+lbm_render_mode mode = CURL;
 
 //keyboard callback
 void keyboard(unsigned char a, int b, int c)
@@ -121,7 +119,7 @@ void display()
 	glRotatef(rotate_x, 1.0, 0.0, 0.0);
 	glRotatef(rotate_y, 0.0, 1.0, 0.0);
 
-	lbm->launchKernels(mode, out);
+	lbm->launchKernels(mode);
 
 	glEnable(GL_TEXTURE_2D);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);

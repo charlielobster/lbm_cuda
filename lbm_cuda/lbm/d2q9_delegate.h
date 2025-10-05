@@ -5,34 +5,7 @@
 #include <GL/freeglut.h>
 
 #include "lbm_delegate.h"
-
-#define INDEX(x, y) ((x) + (y) * LATTICE_WIDTH)
-
-typedef enum {
-	ZERO = 0,
-	EAST,
-	NORTH,
-	WEST,
-	SOUTH,
-	NORTHEAST,
-	NORTHWEST,
-	SOUTHWEST,
-	SOUTHEAST
-} d2q9_vector;
-
-typedef struct {
-	float ux;	// x velocity
-	float uy;	// y velocity
-	float rho;	// density
-	float vectors[9];
-} d2q9_lbm_node;
-
-typedef struct {
-	char x_position;			
-	char y_position;
-	float weight;
-	unsigned char opposite;
-} d2q9_velocity_set;
+#include "d2q9.h"
 
 class d2q9_delegate : public lbm_delegate
 {
@@ -48,7 +21,7 @@ public:
 		cuda_pbo_resource(0), 
 		barrierUpdated(true) {}
 	~d2q9_delegate() {}
-	void launchKernels(lbm_render_mode mode, unsigned char* out);
+	void launchKernels(lbm_render_mode mode);
 	void resetLattice(GLuint pbo);
 	void clearBarrier();
 	void drawLineDiagonal();
@@ -56,6 +29,7 @@ public:
 	void freeCUDA();
 
 private:
+	unsigned char out[LATTICE_DIMENSION];
 	bool barrierUpdated;
 	unsigned char* barrier;
 	d2q9_lbm_node* array1;

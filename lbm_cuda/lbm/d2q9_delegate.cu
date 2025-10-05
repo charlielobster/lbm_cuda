@@ -34,7 +34,7 @@ void d2q9_delegate::resetLattice(GLuint pbo)
 	{
 		for (int y = 0; y < LATTICE_HEIGHT; y++)
 		{
-			i = INDEX(x, y);
+			i = D2Q9_INDEX(x, y);
 			array1[i].vectors[ZERO] = d2q9[ZERO].weight * (1 - 1.5 * 1e-2);
 			array1[i].vectors[EAST] = d2q9[EAST].weight * (1 + 3e-1+ 3e-2);
 			array1[i].vectors[WEST] = d2q9[WEST].weight * (1 - 3e-1+ 3e-2);
@@ -63,7 +63,7 @@ void d2q9_delegate::resetLattice(GLuint pbo)
 	cudaDeviceSynchronize();
 }
 
-void d2q9_delegate::launchKernels(lbm_render_mode mode, unsigned char* out)
+void d2q9_delegate::launchKernels(lbm_render_mode mode)
 {
 	//reset image pointer
 	uchar4* d_out = 0;
@@ -112,7 +112,7 @@ void d2q9_delegate::clearBarrier()
 	{
 		for (int j = 0; j < LATTICE_HEIGHT; j++)
 		{
-			barrier[INDEX(i, j)] = 0;
+			barrier[D2Q9_INDEX(i, j)] = 0;
 		}
 	}
 	barrierUpdated = true;
@@ -124,7 +124,7 @@ void d2q9_delegate::drawLineDiagonal()
 	for (int i = 0; i < LATTICE_HEIGHT / 4; i++)
 	{
 
-		barrier[INDEX((LATTICE_WIDTH / 3) + (i / 3), LATTICE_HEIGHT / 3 + i)] = 1;
+		barrier[D2Q9_INDEX((LATTICE_WIDTH / 3) + (i / 3), LATTICE_HEIGHT / 3 + i)] = 1;
 	}
 }
 
@@ -135,7 +135,7 @@ void d2q9_delegate::drawSquare()
 	{
 		for (int j = 0; j < LATTICE_HEIGHT / 4; j++)
 		{
-			barrier[INDEX(i + LATTICE_WIDTH / 3, j + LATTICE_HEIGHT * 3 / 8)] = 1;
+			barrier[D2Q9_INDEX(i + LATTICE_WIDTH / 3, j + LATTICE_HEIGHT * 3 / 8)] = 1;
 		}
 	}
 }
