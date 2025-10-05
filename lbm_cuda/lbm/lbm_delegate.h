@@ -8,7 +8,6 @@
 #define LATTICE_HEIGHT 128
 //#define LATTICE_DEPTH 64
 #define LATTICE_DIMENSION 32768
-#define INDEX(x, y) ((x) + (y) * LATTICE_WIDTH)
 
 typedef enum {
 	CURL,

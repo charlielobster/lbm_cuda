@@ -6,6 +6,8 @@
 
 #include "lbm_delegate.h"
 
+#define INDEX(x, y) ((x) + (y) * LATTICE_WIDTH)
+
 typedef enum {
 	ZERO = 0,
 	EAST,
