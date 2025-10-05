@@ -228,7 +228,6 @@ void printDeviceInfo()
 		printf("Max threads in Z-dimension of block: %d\n\n", prop.maxThreadsDim[2]);
 		if (ce != cudaSuccess) { printf("error: %s\n", cudaGetErrorString(ce)); }
 	}
-	printf("%.2f %.2f\n", 3e-1, 3e-2);
 }
 
 int main(int argc, char** argv) 

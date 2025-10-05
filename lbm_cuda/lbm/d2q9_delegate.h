@@ -30,32 +30,24 @@ typedef struct {
 	char y_position;
 	float weight;
 	unsigned char opposite;
-} d2q9_position_weight;
+} d2q9_velocity_set;
 
-// encapsulate the d2q9 details
 class d2q9_delegate : public lbm_delegate
 {
 public:
-	d2q9_delegate() : a1(0), a2(0), array1_gpu(0), array2_gpu(0), barrier_gpu(0), d2q9_gpu(0), cuda_pbo_resource(0) {}
+	d2q9_delegate() : array1(0), array2(0), array1_gpu(0), array2_gpu(0), barrier_gpu(0), d2q9_gpu(0), cuda_pbo_resource(0) {}
 	~d2q9_delegate() {}
-
 	void launchKernels(render_mode mode, bool barriersUpdated, unsigned char* barrier, unsigned char* out);
 	void resetLattice(GLuint pbo, unsigned char* barrier);
 	void freeCUDA();
 
 private:
-	void initCUDA(d2q9_position_weight* d2q9, d2q9_lbm_node* array1, d2q9_lbm_node* array2, unsigned char* barrier);
-	void initPboResource(GLuint pbo);
-	void initD2q9(d2q9_position_weight* d2q9);
-	void initA1(d2q9_position_weight* d2q9);
-
-	d2q9_lbm_node* a1;
-	d2q9_lbm_node* a2;
-
+	d2q9_lbm_node* array1;
+	d2q9_lbm_node* array2;
 	d2q9_lbm_node* array1_gpu;
 	d2q9_lbm_node* array2_gpu;
 	unsigned char* barrier_gpu;
-	d2q9_position_weight* d2q9_gpu;
+	d2q9_velocity_set* d2q9_gpu;
 	struct cudaGraphicsResource* cuda_pbo_resource;
 };
 
